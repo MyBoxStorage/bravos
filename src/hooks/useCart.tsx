@@ -74,6 +74,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
 
   const clearCart = useCallback(() => {
     setItems([]);
+    // Limpar dados do pedido pendente do localStorage
+    localStorage.removeItem('bb_order_pending');
   }, []);
 
   const cart = useMemo<Cart>(() => {

@@ -10,13 +10,16 @@
 import { Payment } from '@mercadopago/sdk-react';
 import { useMemo } from 'react';
 import type { CartItem } from '@/types';
-import { generateExternalReference } from '@/config/mercadopago.config';
+import { toast } from 'sonner';
+import { Alert, AlertDescription } from '@/components/ui/alert';
+import { Button } from '@/components/ui/button';
 
 interface PaymentBrickProps {
   amount: number;
   items: CartItem[];
   payerEmail: string;
   payerName?: string;
+  externalReference: string; // OBRIGATÓRIO: External reference do pedido criado no backend
   onReady?: () => void;
   onSubmit?: (formData: any) => Promise<unknown>;
   onError?: (error: any) => void;
@@ -27,14 +30,46 @@ export function PaymentBrick({
   items,
   payerEmail,
   payerName,
+  externalReference,
   onReady,
   onSubmit,
   onError,
 }: PaymentBrickProps) {
+  console.log('PaymentBrick - Componente renderizado');
+  console.log('PaymentBrick - Props:', { amount, itemsCount: items.length, payerEmail, payerName, externalReference });
+  
+  // Validação: externalReference é OBRIGATÓRIO
+  // Não gerar fallback - deve vir do Order criado no backend
+  if (!externalReference || externalReference.trim() === '') {
+    console.error('PaymentBrick - ERRO: externalReference é obrigatório e não foi fornecido');
+    toast.error('Erro: não foi possível iniciar o pagamento. Recarregue o checkout.');
+    
+    return (
+      <div className="w-full min-h-[400px] py-4 flex items-center justify-center">
+        <Alert className="max-w-md border-red-200 bg-red-50">
+          <AlertDescription className="text-red-800">
+            <p className="font-semibold mb-2">Erro ao iniciar pagamento</p>
+            <p className="text-sm mb-4">
+              Não foi possível iniciar o pagamento. Por favor, recarregue a página e tente novamente.
+            </p>
+            <Button
+              onClick={() => window.location.reload()}
+              variant="outline"
+              className="w-full"
+            >
+              Recarregar Página
+            </Button>
+          </AlertDescription>
+        </Alert>
+      </div>
+    );
+  }
+  
   // Prepara os dados de inicialização do Payment Brick
   // Usando useMemo para evitar recriações desnecessárias
   const initialization = useMemo(() => {
-    const externalReference = generateExternalReference();
+    console.log('PaymentBrick - Criando initialization object');
+    console.log('PaymentBrick - Usando externalReference do pedido:', externalReference);
 
     return {
       amount: amount,
@@ -67,22 +102,82 @@ export function PaymentBrick({
         notification_url: import.meta.env.VITE_MERCADOPAGO_WEBHOOK_URL,
       }),
     };
-  }, [amount, items, payerEmail, payerName]);
+  }, [amount, items, payerEmail, payerName, externalReference]);
+
+  console.log('PaymentBrick - Initialization:', initialization);
+  console.log('PaymentBrick - Renderizando componente Payment do Mercado Pago');
+
+  // Log antes do return
+  console.log('PaymentBrick - Dentro do return, renderizando Payment');
 
   return (
-    <Payment
-      initialization={initialization}
-      customization={{
-        paymentMethods: {
-          creditCard: 'all',
-          debitCard: 'all',
-          ticket: 'all',
-          bankTransfer: ['pix'],
-        },
-      }}
-      onSubmit={onSubmit || (async () => Promise.resolve())}
-      onReady={onReady}
-      onError={onError}
-    />
+    <div 
+      id="payment-brick-container" 
+      className="w-full min-h-[400px] py-4"
+      style={{ minHeight: '400px' }}
+    >
+      <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <p className="text-sm text-blue-800">
+          💳 Selecione seu método de pagamento abaixo
+        </p>
+      </div>
+      <Payment
+        initialization={initialization}
+        customization={{
+          paymentMethods: {
+            creditCard: 'all',
+            debitCard: 'all',
+            ticket: 'all',
+            bankTransfer: ['pix'],
+          },
+        }}
+        onSubmit={async (formData: any) => {
+          console.log('PaymentBrick - onSubmit chamado com dados:', formData);
+          
+          // Se houver callback customizado, chama primeiro
+          // O callback pode fazer o redirecionamento
+          if (onSubmit) {
+            try {
+              await onSubmit(formData);
+            } catch (error) {
+              console.error('PaymentBrick - Erro no callback onSubmit:', error);
+            }
+          } else {
+            // Fallback: redirecionamento padrão se não houver callback
+            console.log('PaymentBrick - Nenhum callback onSubmit, usando redirecionamento padrão');
+            
+            if (formData?.status === 'approved') {
+              console.log('✅ PaymentBrick - Pagamento aprovado, redirecionando...');
+              const successUrl = `${window.location.origin}/checkout/success?payment_id=${formData.id}&status=approved&external_reference=${formData.external_reference || ''}`;
+              window.location.href = successUrl;
+            } else if (formData?.status === 'pending') {
+              console.log('⏳ PaymentBrick - Pagamento pendente, redirecionando...');
+              const pendingUrl = `${window.location.origin}/checkout/pending?payment_id=${formData.id}&status=pending&external_reference=${formData.external_reference || ''}`;
+              window.location.href = pendingUrl;
+            } else if (formData?.status === 'rejected' || formData?.status === 'cancelled') {
+              console.log('❌ PaymentBrick - Pagamento rejeitado, redirecionando...');
+              const failureUrl = `${window.location.origin}/checkout/failure?payment_id=${formData.id}&status=${formData.status}&status_detail=${formData.status_detail || ''}`;
+              window.location.href = failureUrl;
+            }
+          }
+          
+          return Promise.resolve();
+        }}
+        onReady={() => {
+          console.log('✅ PaymentBrick - onReady chamado - Brick está pronto!');
+          console.log('✅ PaymentBrick - Métodos de pagamento devem estar visíveis agora');
+          onReady?.();
+        }}
+        onError={(error) => {
+          console.error('❌ PaymentBrick - onError chamado:', error);
+          onError?.(error);
+        }}
+      />
+      <div className="mt-4 p-3 bg-gray-50 border border-gray-200 rounded-lg">
+        <p className="text-xs text-gray-600">
+          💡 Se os métodos de pagamento não aparecerem, verifique o console do navegador (F12) para mais informações.
+        </p>
+      </div>
+    </div>
   );
 }

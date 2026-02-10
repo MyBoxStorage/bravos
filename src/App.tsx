@@ -1,53 +1,30 @@
-import { useEffect } from 'react';
-import { Toaster } from '@/components/ui/sonner';
-import { CartProvider } from '@/hooks/useCart';
-import { MercadoPagoProvider } from '@/components/MercadoPagoProvider';
-import { Header } from '@/sections/Header';
-import { Hero } from '@/sections/Hero';
-import { SocialProof } from '@/sections/SocialProof';
-import { FeaturedProducts } from '@/sections/FeaturedProducts';
-import { VideoShowcase } from '@/sections/VideoShowcase';
-import { Customization } from '@/sections/Customization';
-import { Values } from '@/sections/Values';
-import { Testimonials } from '@/sections/Testimonials';
-import { Catalog } from '@/sections/Catalog';
-import { FAQ } from '@/sections/FAQ';
-import { Newsletter } from '@/sections/Newsletter';
-import { Footer } from '@/sections/Footer';
-import './App.css';
+import { useEffect } from "react";
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+
+// Pages
+import HomePage from "@/pages/HomePage";
+import CheckoutSuccess from "@/pages/CheckoutSuccess";
+import CheckoutFailure from "@/pages/CheckoutFailure";
+import CheckoutPending from "@/pages/CheckoutPending";
+import OrderTracking from "@/pages/OrderTracking";
+import AdminDashboard from "@/pages/AdminDashboard";
 
 function App() {
   useEffect(() => {
-    // Smooth scroll polyfill for older browsers
-    document.documentElement.style.scrollBehavior = 'smooth';
-    
-    return () => {
-      document.documentElement.style.scrollBehavior = 'auto';
-    };
+    console.log("App initialized");
   }, []);
 
   return (
-    <MercadoPagoProvider>
-      <CartProvider>
-        <div className="min-h-screen bg-white">
-        <Header />
-        <main>
-          <Hero />
-          <SocialProof />
-          <FeaturedProducts />
-          <VideoShowcase />
-          <Customization />
-          <Values />
-          <Testimonials />
-          <Catalog />
-          <FAQ />
-          <Newsletter />
-        </main>
-        <Footer />
-          <Toaster position="bottom-right" richColors />
-        </div>
-      </CartProvider>
-    </MercadoPagoProvider>
+    <BrowserRouter>
+      <Routes>
+        <Route path="/" element={<HomePage />} />
+        <Route path="/checkout/success" element={<CheckoutSuccess />} />
+        <Route path="/checkout/failure" element={<CheckoutFailure />} />
+        <Route path="/checkout/pending" element={<CheckoutPending />} />
+        <Route path="/order" element={<OrderTracking />} />
+        <Route path="/admin" element={<AdminDashboard />} />
+      </Routes>
+    </BrowserRouter>
   );
 }
 

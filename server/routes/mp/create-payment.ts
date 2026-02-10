@@ -46,7 +46,7 @@ export async function createPayment(req: Request, res: Response) {
     if (!validationResult.success) {
       return res.status(400).json({
         error: 'Validation error',
-        details: validationResult.error.errors,
+        details: validationResult.error.issues,
       });
     }
 
@@ -151,7 +151,7 @@ export async function createPayment(req: Request, res: Response) {
       body: JSON.stringify(mpPaymentData),
     });
 
-    const mpData = await mpResponse.json();
+    const mpData = await mpResponse.json() as any;
 
     if (!mpResponse.ok) {
       logger.error('Mercado Pago error:', mpData);

@@ -31,6 +31,10 @@ bravos-real/app/
 |----------|--------------|-------------|------------|
 | `DATABASE_URL` | `prisma/schema.prisma:11`<br>`server/routes/mp/create-payment.ts`<br>`server/routes/mp/webhooks.ts` | ✅ Sim | Supabase Dashboard → Settings → Database → Connection string |
 | `MP_ACCESS_TOKEN` | `server/routes/mp/create-payment.ts:56`<br>`server/routes/mp/webhooks.ts:49` | ✅ Sim | Painel MP → Credentials → Access Token |
+| `MONTINK_API_TOKEN` | `server/integrations/montink/client.ts:10` | ⚠️ Opcional | Token da API Montink (quando integrar) |
+| `MONTINK_BASE_URL` | `server/integrations/montink/client.ts:9` | ⚠️ Opcional | URL base da API Montink (padrão: `https://api.montink.com.br`) |
+| `MONTINK_CREATE_ORDER_ENABLED` | `server/services/montinkFulfillment.ts:12` | ⚠️ Opcional | Feature flag para criação automática de pedidos (padrão: `false`) |
+| `ADMIN_TOKEN` | `server/routes/orders/mark-montink.ts:15` | ⚠️ Opcional | Token para operações administrativas (marcar pedidos como enviados à Montink) |
 | `FRONTEND_URL` | `server/index.ts:23` (CORS) | ✅ Sim | URL do frontend: `http://localhost:5173` ou `https://bravosbrasil.com.br` |
 | `BACKEND_URL` | `server/routes/mp/create-payment.ts:93` (webhook URL) | ✅ Sim | URL do backend: `http://localhost:3001` ou `https://api.bravosbrasil.com.br` |
 | `PORT` | `server/index.ts:19` | ⚠️ Opcional | Porta do servidor (padrão: 3001) |
@@ -56,6 +60,14 @@ DATABASE_URL="postgresql://postgres:minhasenha123@db.joagnmqivhyxbkhskkjp.supaba
 
 # Mercado Pago - Access Token (NUNCA expor no frontend!)
 MP_ACCESS_TOKEN=APP_USR-9876543210987654-654321-fedcba0987654321fedcba0987654321-987654321
+
+# Montink
+MONTINK_API_TOKEN=your_token_here
+MONTINK_BASE_URL=https://api.montink.com.br
+MONTINK_CREATE_ORDER_ENABLED=false
+
+# Admin
+ADMIN_TOKEN=your_admin_token_here
 
 # URLs
 FRONTEND_URL=http://localhost:5173
