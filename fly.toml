@@ -1,13 +1,12 @@
 # Fly.io Configuration - BRAVOS BRASIL Backend
-# Para deploy via Git: use fly.toml na RAIZ (config path = "fly.toml")
+# USAR ESTE ARQUIVO: config path = "fly.toml" (raiz do repo)
 # https://fly.io/docs/reference/configuration/
 
 app = "bravos-backend"
 primary_region = "gru"  # São Paulo, Brazil
 
 [build]
-  # Nota: use fly.toml na raiz do repo (config path = "fly.toml") para deploy correto
-  dockerfile = "Dockerfile"
+  dockerfile = "server/Dockerfile"
 
 [env]
   PORT = "8080"
