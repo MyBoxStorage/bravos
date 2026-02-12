@@ -5,11 +5,20 @@ import { inspectAttr } from 'kimi-plugin-inspect-react'
 
 // https://vite.dev/config/
 export default defineConfig({
-  base: './',
+  base: '/', // absoluto para assets em rotas como /checkout/pending
   plugins: [inspectAttr(), react()],
   resolve: {
     alias: {
       "@": path.resolve(__dirname, "./src"),
+    },
+  },
+  build: {
+    outDir: 'dist',
+    assetsDir: 'assets',
+    rollupOptions: {
+      output: {
+        manualChunks: undefined,
+      },
     },
   },
 });
