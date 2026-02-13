@@ -36,6 +36,9 @@ async function main() {
       if (data.countHighRiskLast1h != null || data.countHighRiskLast24h != null) {
         console.log(`[INFO] highRisk last1h=${data.countHighRiskLast1h ?? 0} last24h=${data.countHighRiskLast24h ?? 0}`);
       }
+      if (data.abandonedPending?.count != null && data.abandonedPending.count > 0) {
+        console.log(`[INFO] abandonedPending=${data.abandonedPending.count} (non-blocking)`);
+      }
       process.exit(0);
     }
 

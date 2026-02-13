@@ -24,6 +24,7 @@ export async function monitorStatus(req: Request, res: Response) {
 
   let dbOk = false;
   let pendingTooLong = { count: 0, examples: [] as string[] };
+  let abandonedPending = { count: 0, examples: [] as string[] };
   let failedWebhooks = { count: 0, examples: [] as string[] };
   let countHighRiskLast24h = 0;
   let countHighRiskLast1h = 0;
@@ -39,6 +40,7 @@ export async function monitorStatus(req: Request, res: Response) {
       thresholds,
       db: { ok: false },
       pendingTooLong,
+      abandonedPending,
       failedWebhooks,
       countHighRiskLast24h,
       countHighRiskLast1h,
@@ -46,12 +48,13 @@ export async function monitorStatus(req: Request, res: Response) {
     return;
   }
 
-  // B) PENDING too long (createdAt < now - 15 min)
+  // B) PENDING too long: only those WITH mp_payment_id (payment created, stale) — blocks ok
   const pendingCutoff = new Date(now.getTime() - PENDING_TOO_LONG_MINUTES * 60 * 1000);
   try {
     const pendingOrders = await prisma.order.findMany({
       where: {
         status: 'PENDING',
+        mpPaymentId: { not: null },
         createdAt: { lt: pendingCutoff },
       },
       select: { externalReference: true },
@@ -61,12 +64,40 @@ export async function monitorStatus(req: Request, res: Response) {
     const count = await prisma.order.count({
       where: {
         status: 'PENDING',
+        mpPaymentId: { not: null },
         createdAt: { lt: pendingCutoff },
       },
     });
     pendingTooLong = {
       count,
       examples: pendingOrders.map((o: { externalReference: string }) => o.externalReference),
+    };
+  } catch {
+    // If query fails, leave count 0 and examples []
+  }
+
+  // B2) Abandoned pending: PENDING without mp_payment_id (carrinho abandonado) — non-blocking
+  try {
+    const abandonedOrders = await prisma.order.findMany({
+      where: {
+        status: 'PENDING',
+        mpPaymentId: null,
+        createdAt: { lt: pendingCutoff },
+      },
+      select: { externalReference: true },
+      orderBy: { createdAt: 'asc' },
+      take: 5,
+    });
+    const count = await prisma.order.count({
+      where: {
+        status: 'PENDING',
+        mpPaymentId: null,
+        createdAt: { lt: pendingCutoff },
+      },
+    });
+    abandonedPending = {
+      count,
+      examples: abandonedOrders.map((o: { externalReference: string }) => o.externalReference),
     };
   } catch {
     // If query fails, leave count 0 and examples []
@@ -141,6 +172,7 @@ export async function monitorStatus(req: Request, res: Response) {
     thresholds,
     db: { ok: dbOk },
     pendingTooLong,
+    abandonedPending,
     failedWebhooks,
     countHighRiskLast24h,
     countHighRiskLast1h,
