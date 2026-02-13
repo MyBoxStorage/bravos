@@ -1,45 +1,47 @@
 # Dockerfile for Fly.io - BRAVOS BRASIL Backend
 # Build context should be from project root
+# Schema outputs to ../server/node_modules/.prisma/client — layout must match
 FROM node:20-alpine AS base
 
 # Install dependencies only when needed
 FROM base AS deps
 WORKDIR /app
 
-# Copy package files from server directory
-COPY server/package.json server/package-lock.json ./
-RUN npm ci --only=production
-
-# Copy Prisma schema (from root prisma directory)
+# Copy Prisma schema (INVARIANTE A)
 COPY prisma ./prisma
 
-# Generate Prisma Client
-RUN npx prisma generate --schema=./prisma/schema.prisma
+# Install server deps under server/ so schema output path ../server/node_modules/.prisma/client resolves
+COPY server/package.json server/package-lock.json ./server/
+RUN cd server && npm ci --only=production
+
+# Generate Prisma Client (INVARIANTE B/C — prisma@5.22.0, before build/start)
+RUN cd server && npx prisma@5.22.0 generate --schema=../prisma/schema.prisma
 
 # Build stage
 FROM base AS builder
 WORKDIR /app
 
-# Copy package files
-COPY server/package.json server/package-lock.json ./
-RUN npm ci
-
-# Copy Prisma for build
+# Copy Prisma (INVARIANTE A)
 COPY prisma ./prisma
-RUN npx prisma generate --schema=./prisma/schema.prisma
+
+# Install server deps under server/
+COPY server/package.json server/package-lock.json ./server/
+RUN cd server && npm ci
+
+# Generate Prisma Client (INVARIANTE B/C)
+RUN cd server && npx prisma@5.22.0 generate --schema=../prisma/schema.prisma
 
 # Copy source code
-COPY server/tsconfig.json ./
-COPY server/index.ts ./
-COPY server/routes ./routes
-COPY server/utils ./utils
-COPY server/services ./services
-COPY server/integrations ./integrations
-COPY server/config ./config
-COPY server/types ./types
+COPY server/tsconfig.json server/index.ts ./server/
+COPY server/routes ./server/routes
+COPY server/utils ./server/utils
+COPY server/services ./server/services
+COPY server/integrations ./server/integrations
+COPY server/config ./server/config
+COPY server/types ./server/types
 
 # Build TypeScript
-RUN npm run build
+RUN cd server && npm run build
 
 # Production stage
 FROM base AS runner
@@ -52,11 +54,10 @@ WORKDIR /app
 ENV NODE_ENV=production
 ENV PORT=8080
 
-# Copy built application
-COPY --from=builder /app/dist ./dist
-COPY --from=deps /app/node_modules ./node_modules
-COPY --from=deps /app/node_modules/.prisma ./node_modules/.prisma
-COPY --from=builder /app/package.json ./package.json
+# Copy built application (dist + node_modules from server/ where .prisma was generated)
+COPY --from=builder /app/server/dist ./dist
+COPY --from=builder /app/server/package.json ./package.json
+COPY --from=deps /app/server/node_modules ./node_modules
 COPY --from=builder /app/prisma ./prisma
 
 # Expose port
