@@ -1,5 +1,19 @@
 # 🚀 Deploy no Fly.io - BRAVOS BRASIL Backend
 
+**IMPORTANT:**  
+Backend deploy **MUST** use:
+
+- `server/fly.toml`
+- `server/Dockerfile`
+- Build context: repository root
+
+Root `fly.toml` and root `Dockerfile` are for static app only.
+
+**Production migrations** run automatically on Fly via `release_command`:
+`npx prisma migrate deploy --schema=./prisma/schema.prisma`. No manual post-deploy steps required.
+
+---
+
 ## Pré-requisitos
 
 1. Conta no Fly.io: https://fly.io/app/sign-up
@@ -97,24 +111,7 @@ Deve retornar:
 }
 ```
 
-## Passo 6: Configurar Prisma (IMPORTANTE)
-
-Após o primeiro deploy, você precisa rodar o Prisma:
-
-```bash
-# Entrar no container
-fly ssh console
-
-# Dentro do container:
-cd /app
-npx prisma generate
-npx prisma db push --schema=prisma/schema.prisma
-
-# Sair
-exit
-```
-
-## Passo 7: Configurar Domínio Customizado (Opcional)
+## Passo 6: Configurar Domínio Customizado (Opcional)
 
 Se quiser usar `api.bravosbrasil.com.br`:
 
@@ -167,7 +164,7 @@ fly metrics
 
 ### Erro: "Database connection failed"
 - Verifique `DATABASE_URL` com `fly secrets list`
-- Teste conexão: `fly ssh console` → `npx prisma db push`
+- Migrations rodam automaticamente no deploy; para testar conexão: `fly ssh console` → `npx prisma migrate status --schema=./prisma/schema.prisma`
 
 ### Erro: "Port already in use"
 - Fly.io usa porta 8080 automaticamente

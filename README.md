@@ -43,6 +43,22 @@ Para obter o Access Token:
 npm run dev
 ```
 
+## Deployment structure
+
+- **Frontend** → Vercel
+- **Backend** → Fly (`server/fly.toml`)
+- Root `fly.toml` is **NOT** backend
+
+## Go-live check
+
+Quick validation of API health, admin auth, and payment endpoint (optional: frontend). Node 18+.
+
+```bash
+node scripts/go-live-check.js https://api.example.com https://example.com
+```
+
+Omit the second URL to run only API checks. Exits 0 on pass, 1 on failure.
+
 ## 📝 Scripts Disponíveis
 
 - `npm run dev` - Inicia o servidor de desenvolvimento

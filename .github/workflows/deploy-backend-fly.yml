@@ -6,7 +6,6 @@ on:
     paths:
       - 'server/**'
       - 'prisma/**'
-      - 'fly.toml'
       - '.github/workflows/deploy-backend-fly.yml'
 
 jobs:
@@ -20,6 +19,12 @@ jobs:
         uses: superfly/flyctl-actions/setup-flyctl@master
 
       - name: Deploy to Fly.io
-        run: flyctl deploy --remote-only --config fly.toml -a bravos-backend
+        run: |
+          flyctl deploy \
+            --remote-only \
+            --config server/fly.toml \
+            --dockerfile server/Dockerfile \
+            --path . \
+            -a bravos-backend
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
