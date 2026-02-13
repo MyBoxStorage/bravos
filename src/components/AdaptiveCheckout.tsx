@@ -54,9 +54,9 @@ export function AdaptiveCheckout({
   const handleMobileCheckout = async () => {
     try {
       setIsCreatingPreference(true);
-      
-      console.log('AdaptiveCheckout - Criando preferência para mobile...');
-      
+
+      if (import.meta.env.DEV) console.log('AdaptiveCheckout - Criando preferência para mobile...');
+
       const preferenceData: CreatePreferenceRequest = {
         items,
         payer: {
@@ -71,10 +71,12 @@ export function AdaptiveCheckout({
       };
 
       const result = await createPreference(preferenceData);
-      
-      console.log('✅ AdaptiveCheckout - Preferência criada:', result.preferenceId);
-      console.log('📱 AdaptiveCheckout - Redirecionando para checkout mobile...');
-      
+
+      if (import.meta.env.DEV) {
+        console.log('✅ AdaptiveCheckout - Preferência criada:', result.preferenceId);
+        console.log('📱 AdaptiveCheckout - Redirecionando para checkout mobile...');
+      }
+
       // Redirecionar para o checkout do Mercado Pago
       // O Mercado Pago detecta automaticamente o dispositivo e abre no app se disponível
       redirectToCheckout(result.initPoint);

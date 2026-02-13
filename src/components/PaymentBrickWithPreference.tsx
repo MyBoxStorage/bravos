@@ -42,13 +42,15 @@ export function PaymentBrickWithPreference({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
-  console.log('PaymentBrickWithPreference - Componente renderizado');
-  console.log('PaymentBrickWithPreference - Props:', { 
-    amount, 
-    itemsCount: items.length, 
-    payerEmail, 
-    payerName 
-  });
+  if (import.meta.env.DEV) {
+    console.log('PaymentBrickWithPreference - Componente renderizado');
+    console.log('PaymentBrickWithPreference - Props:', { 
+      amount, 
+      itemsCount: items.length, 
+      payerEmail, 
+      payerName 
+    });
+  }
 
   // Criar preferência quando o componente montar
   useEffect(() => {
@@ -56,9 +58,9 @@ export function PaymentBrickWithPreference({
       try {
         setIsLoading(true);
         setError(null);
-        
-        console.log('PaymentBrickWithPreference - Criando preferência...');
-        
+
+        if (import.meta.env.DEV) console.log('PaymentBrickWithPreference - Criando preferência...');
+
         const preferenceData: CreatePreferenceRequest = {
           items,
           payer: {
@@ -73,8 +75,8 @@ export function PaymentBrickWithPreference({
         };
 
         const result = await createPreference(preferenceData);
-        
-        console.log('✅ PaymentBrickWithPreference - Preferência criada:', result.preferenceId);
+
+        if (import.meta.env.DEV) console.log('✅ PaymentBrickWithPreference - Preferência criada:', result.preferenceId);
         setPreferenceId(result.preferenceId);
         setIsLoading(false);
       } catch (err) {
@@ -122,7 +124,7 @@ export function PaymentBrickWithPreference({
     );
   }
 
-  console.log('PaymentBrickWithPreference - Renderizando Payment com preferenceId:', preferenceId);
+  if (import.meta.env.DEV) console.log('PaymentBrickWithPreference - Renderizando Payment com preferenceId:', preferenceId);
 
   return (
     <div 
@@ -150,8 +152,10 @@ export function PaymentBrickWithPreference({
         }}
         onSubmit={onSubmit || (async () => Promise.resolve())}
         onReady={() => {
-          console.log('✅ PaymentBrickWithPreference - onReady chamado - Brick está pronto!');
-          console.log('✅ PaymentBrickWithPreference - Métodos de pagamento devem estar visíveis agora');
+          if (import.meta.env.DEV) {
+            console.log('✅ PaymentBrickWithPreference - onReady chamado - Brick está pronto!');
+            console.log('✅ PaymentBrickWithPreference - Métodos de pagamento devem estar visíveis agora');
+          }
           onReady?.();
         }}
         onError={(error) => {

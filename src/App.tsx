@@ -11,7 +11,7 @@ import AdminDashboard from "@/pages/AdminDashboard";
 
 function App() {
   useEffect(() => {
-    console.log("App initialized");
+    if (import.meta.env.DEV) console.log("App initialized");
   }, []);
 
   return (

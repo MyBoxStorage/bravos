@@ -16,25 +16,27 @@ interface MercadoPagoProviderProps {
 
 export function MercadoPagoProvider({ children }: MercadoPagoProviderProps) {
   useEffect(() => {
-    console.log('MercadoPagoProvider - Inicializando SDK');
-    
-    // Debug completo das variáveis de ambiente
-    console.log('🔑 MercadoPagoProvider - Todas as variáveis VITE_*:', 
-      Object.keys(import.meta.env)
-        .filter(key => key.startsWith('VITE_'))
-        .reduce((obj, key) => {
-          obj[key] = import.meta.env[key];
-          return obj;
-        }, {} as Record<string, any>)
-    );
-    
+    if (import.meta.env.DEV) {
+      console.log('MercadoPagoProvider - Inicializando SDK');
+      console.log('🔑 MercadoPagoProvider - Todas as variáveis VITE_*:', 
+        Object.keys(import.meta.env)
+          .filter(key => key.startsWith('VITE_'))
+          .reduce((obj, key) => {
+            obj[key] = import.meta.env[key];
+            return obj;
+          }, {} as Record<string, any>)
+      );
+    }
+
     const publicKey = import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY;
-    
-    console.log('🔑 MercadoPagoProvider - Public Key (raw):', publicKey);
-    console.log('🔑 MercadoPagoProvider - Public Key presente:', !!publicKey);
-    console.log('🔑 MercadoPagoProvider - Public Key (primeiros 20 chars):', publicKey ? publicKey.substring(0, 20) + '...' : 'NÃO CONFIGURADA');
-    console.log('🔑 MercadoPagoProvider - Public Key (completa):', publicKey || 'NÃO CONFIGURADA');
-    
+
+    if (import.meta.env.DEV) {
+      console.log('🔑 MercadoPagoProvider - Public Key (raw):', publicKey);
+      console.log('🔑 MercadoPagoProvider - Public Key presente:', !!publicKey);
+      console.log('🔑 MercadoPagoProvider - Public Key (primeiros 20 chars):', publicKey ? publicKey.substring(0, 20) + '...' : 'NÃO CONFIGURADA');
+      console.log('🔑 MercadoPagoProvider - Public Key (completa):', publicKey || 'NÃO CONFIGURADA');
+    }
+
     if (!publicKey) {
       console.error(
         '❌ VITE_MERCADOPAGO_PUBLIC_KEY não está configurado. ' +
@@ -44,13 +46,13 @@ export function MercadoPagoProvider({ children }: MercadoPagoProviderProps) {
     }
 
     try {
-      console.log('MercadoPagoProvider - Chamando initMercadoPago...');
+      if (import.meta.env.DEV) console.log('MercadoPagoProvider - Chamando initMercadoPago...');
       // Inicializa o SDK do Mercado Pago
       // Deve ser chamado apenas uma vez na aplicação
       initMercadoPago(publicKey, {
         locale: 'pt-BR',
       });
-      console.log('✅ MercadoPagoProvider - SDK inicializado com sucesso');
+      if (import.meta.env.DEV) console.log('✅ MercadoPagoProvider - SDK inicializado com sucesso');
     } catch (error) {
       console.error('❌ MercadoPagoProvider - Erro ao inicializar Mercado Pago SDK:', error);
     }

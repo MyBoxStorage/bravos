@@ -6,6 +6,7 @@ import { Alert, AlertDescription } from '@/components/ui/alert';
 import { useEffect, useState, useRef } from 'react';
 import { toast } from 'sonner';
 import { getOrder } from '@/services/orders';
+import { getPaymentDetails } from '@/services/mp-payment';
 import type { OrderResponse } from '@/types/order';
 import { formatCurrency } from '@/lib/utils';
 
@@ -33,41 +34,164 @@ export default function CheckoutPending() {
   const paymentMethod = searchParams.get('payment_type_id');
   
   const [pixData, setPixData] = useState<PixPaymentData | null>(null);
+  const [pixLoadFailed, setPixLoadFailed] = useState<false | 'FAILED' | 'RATE_LIMIT'>(false);
+  const [pixLoading, setPixLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
   const [copied, setCopied] = useState(false);
   const [order, setOrder] = useState<OrderResponse | null>(null);
-  
+
   const pollingIntervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const pollingStartTimeRef = useRef<number>(Date.now());
   const MAX_POLLING_TIME = 5 * 60 * 1000; // 5 minutos
-  
+
   const isPix = paymentMethod === 'pix' || paymentMethod === 'account_money';
   const isBoleto = paymentMethod === 'bolbradesco' || paymentMethod === 'ticket';
-  
-  // Carregar dados do PIX do localStorage
+
+  function persistPixToStorage(data: PixPaymentData) {
+    try {
+      const key = data.externalReference ? `bb_pix_${data.externalReference}` : 'pixPaymentData';
+      localStorage.setItem(key, JSON.stringify(data));
+    } catch {
+      // ignore storage errors
+    }
+  }
+
+  // Carregar dados do PIX: localStorage primeiro, depois API por payment_id ou por order.mpPaymentId
   useEffect(() => {
-    if (isPix) {
-      try {
-        const savedData = localStorage.getItem('pixPaymentData');
-        if (savedData) {
-          const data = JSON.parse(savedData) as PixPaymentData;
-          
-          // Verificar se os dados são do mesmo pagamento
-          if (data.paymentId === paymentId || data.externalReference === externalReference) {
-            setPixData(data);
-            console.log('✅ CheckoutPending - Dados do PIX carregados:', data);
-          } else {
-            console.warn('⚠️ CheckoutPending - Dados do PIX não correspondem ao pagamento atual');
-            // Limpar dados antigos
-            localStorage.removeItem('pixPaymentData');
+    if (!isPix) {
+      setPixLoading(false);
+      return;
+    }
+
+    let cancelled = false;
+
+    function tryLocalStorage(): PixPaymentData | null {
+      const keysToTry = [
+        externalReference ? `bb_pix_${externalReference}` : null,
+        'pixPaymentData',
+        'bb_pix_last',
+      ].filter(Boolean) as string[];
+      for (const key of keysToTry) {
+        try {
+          const raw = localStorage.getItem(key);
+          if (!raw) continue;
+          const data = JSON.parse(raw) as PixPaymentData;
+          if (
+            (paymentId && data.paymentId === paymentId) ||
+            (externalReference && data.externalReference === externalReference)
+          ) {
+            return data;
           }
-        } else {
-          console.warn('⚠️ CheckoutPending - Nenhum dado do PIX encontrado no localStorage');
+        } catch {
+          // ignore
         }
-      } catch (error) {
-        console.error('❌ CheckoutPending - Erro ao carregar dados do PIX:', error);
+      }
+      return null;
+    }
+
+    const fromStorage = tryLocalStorage();
+    if (fromStorage) {
+      setPixData(fromStorage);
+      setPixLoadFailed(false);
+      setPixLoading(false);
+      return;
+    }
+
+    async function fetchByPaymentId(id: string): Promise<boolean> {
+      try {
+        const res = await getPaymentDetails(id);
+        if (cancelled) return false;
+
+        if (!res.ok) {
+          if (res.status === 429) {
+            setPixLoadFailed('RATE_LIMIT');
+            return false;
+          }
+          setPixLoadFailed('FAILED');
+          return false;
+        }
+
+        const td = res.transaction_details;
+        const ref = (res.external_reference as string) || externalReference || '';
+        const data: PixPaymentData = {
+          paymentId: String(res.id ?? id),
+          externalReference: ref,
+          qrCode: td?.qr_code ?? '',
+          qrCodeBase64: td?.qr_code_base64 ?? '',
+          timestamp: Date.now(),
+        };
+
+        if (data.qrCode || data.qrCodeBase64) {
+          setPixData(data);
+          setPixLoadFailed(false);
+          if (ref) persistPixToStorage(data);
+          return true;
+        }
+        setPixLoadFailed('FAILED');
+        return false;
+      } catch {
+        setPixLoadFailed('FAILED');
+        return false;
       }
     }
-  }, [isPix, paymentId, externalReference]);
+
+    async function run() {
+      if (paymentId) {
+        const ok = await fetchByPaymentId(paymentId);
+        if (cancelled) return;
+        if (ok) {
+          setPixLoading(false);
+          return;
+        }
+      }
+
+      if (externalReference && !paymentId) {
+        let email: string | null = null;
+        try {
+          const pendingRaw = localStorage.getItem('bb_order_pending');
+          if (pendingRaw) {
+            const pending = JSON.parse(pendingRaw) as PendingOrderData;
+            if (pending.externalReference === externalReference && pending.email) {
+              email = pending.email;
+            }
+          }
+        } catch {
+          // ignore
+        }
+        if (email) {
+          try {
+            const orderData = await getOrder(externalReference, email);
+            if (cancelled) return;
+            const mpId = orderData.mpPaymentId;
+            if (mpId && (await fetchByPaymentId(mpId))) {
+              setPixLoading(false);
+              return;
+            }
+          } catch {
+            // ignore
+          }
+        }
+      }
+
+      if (cancelled) return;
+      setPixLoading(false);
+      if (paymentId || externalReference) {
+        setPixLoadFailed('FAILED');
+      }
+      if (!paymentId && !externalReference) {
+        if (import.meta.env.DEV) {
+          console.warn(
+            'CheckoutPending: Nenhum dado do PIX encontrado e nenhum identificador na URL (payment_id ou external_reference).'
+          );
+        }
+      }
+    }
+
+    run();
+    return () => {
+      cancelled = true;
+    };
+  }, [isPix, paymentId, externalReference, refreshTrigger]);
 
   // Carregar dados do pedido e iniciar polling
   useEffect(() => {
@@ -183,9 +307,9 @@ export default function CheckoutPending() {
               </Alert>
               
               {/* QR CODE IMAGE */}
-              {pixData.qrCodeBase64 && (
+              {pixData.qrCodeBase64 ? (
                 <div className="bg-white p-4 rounded-lg border-2 border-blue-200 shadow-lg">
-                  <img 
+                  <img
                     src={`data:image/png;base64,${pixData.qrCodeBase64}`}
                     alt="QR Code PIX"
                     className="w-64 h-64 mx-auto"
@@ -193,6 +317,12 @@ export default function CheckoutPending() {
                   />
                   <p className="text-xs text-gray-500 mt-2">
                     Escaneie este QR Code com o app do seu banco
+                  </p>
+                </div>
+              ) : (
+                <div className="bg-white p-4 rounded-lg border-2 border-blue-200 shadow-lg">
+                  <p className="text-sm text-gray-600">
+                    QR Code indisponível no momento. Use o código PIX &quot;copia e cola&quot; abaixo.
                   </p>
                 </div>
               )}
@@ -234,15 +364,45 @@ export default function CheckoutPending() {
           )}
           
           {/* Alerta PIX sem dados (fallback) */}
-          {isPix && !pixData && (
+          {isPix && !pixData && !pixLoading && (
             <Alert className="mb-6 border-blue-200 bg-blue-50">
               <QrCode className="h-4 w-4 text-blue-600" />
               <AlertDescription className="text-blue-800">
-                <strong>PIX:</strong> O QR Code foi gerado. Você tem até 30 minutos para realizar o pagamento.
-                <br />
-                <span className="text-xs text-blue-600 mt-1 block">
-                  As instruções de pagamento foram enviadas para seu email.
-                </span>
+                {pixLoadFailed === 'RATE_LIMIT' ? (
+                  <>
+                    <strong>PIX:</strong> Muitas tentativas em pouco tempo. Aguarde 1 minuto e toque em Atualizar.
+                    <div className="mt-3">
+                      <Button
+                        type="button"
+                        variant="default"
+                        size="sm"
+                        onClick={() => {
+                          setPixLoadFailed(false);
+                          setPixLoading(true);
+                          setRefreshTrigger((t) => t + 1);
+                        }}
+                      >
+                        Atualizar
+                      </Button>
+                    </div>
+                  </>
+                ) : pixLoadFailed === 'FAILED' ? (
+                  <>
+                    <strong>PIX:</strong> Não foi possível carregar o QR Code aqui.
+                    {externalReference && (
+                      <> Consulte seu pedido com o número <strong>#{externalReference}</strong> ou verifique seu email.</>
+                    )}
+                    {!externalReference && ' Volte para a loja ou verifique seu email para as instruções de pagamento.'}
+                  </>
+                ) : (
+                  <>
+                    <strong>PIX:</strong> O QR Code foi gerado. Você tem até 30 minutos para realizar o pagamento.
+                    <br />
+                    <span className="text-xs text-blue-600 mt-1 block">
+                      As instruções de pagamento foram enviadas para seu email.
+                    </span>
+                  </>
+                )}
               </AlertDescription>
             </Alert>
           )}

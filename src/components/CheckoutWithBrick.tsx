@@ -43,13 +43,14 @@ export function CheckoutWithBrick({ isOpen, onClose, onSuccess }: CheckoutWithBr
   const [orderData, setOrderData] = useState<CreateOrderResponse | null>(null);
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
 
-  // Debug logs
-  console.log('CheckoutWithBrick - Renderizado');
-  console.log('CheckoutWithBrick - isOpen:', isOpen);
-  console.log('CheckoutWithBrick - showPaymentBrick:', showPaymentBrick);
-  console.log('CheckoutWithBrick - customerData:', customerData);
-  console.log('CheckoutWithBrick - cart.total:', cart.total);
-  console.log('MercadoPago Public Key:', import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY ? 'Configurada' : 'NÃO CONFIGURADA');
+  if (import.meta.env.DEV) {
+    console.log('CheckoutWithBrick - Renderizado');
+    console.log('CheckoutWithBrick - isOpen:', isOpen);
+    console.log('CheckoutWithBrick - showPaymentBrick:', showPaymentBrick);
+    console.log('CheckoutWithBrick - customerData:', customerData);
+    console.log('CheckoutWithBrick - cart.total:', cart.total);
+    console.log('MercadoPago Public Key:', import.meta.env.VITE_MERCADOPAGO_PUBLIC_KEY ? 'Configurada' : 'NÃO CONFIGURADA');
+  }
 
   const {
     register,
@@ -100,8 +101,10 @@ export function CheckoutWithBrick({ isOpen, onClose, onSuccess }: CheckoutWithBr
   };
 
   const onFormSubmit = async (data: CheckoutFormData) => {
-    console.log('CheckoutWithBrick - onFormSubmit chamado');
-    console.log('CheckoutWithBrick - Form data:', data);
+    if (import.meta.env.DEV) {
+      console.log('CheckoutWithBrick - onFormSubmit chamado');
+      console.log('CheckoutWithBrick - Form data:', data);
+    }
     
     if (cart.items.length === 0) {
       toast.error('Seu carrinho está vazio');
@@ -137,12 +140,12 @@ export function CheckoutWithBrick({ isOpen, onClose, onSuccess }: CheckoutWithBr
         })),
       };
 
-      console.log('CheckoutWithBrick - Criando pedido no backend...', orderPayload);
+      if (import.meta.env.DEV) console.log('CheckoutWithBrick - Criando pedido no backend...', orderPayload);
 
       // Criar pedido no backend
       const orderResponse = await createOrder(orderPayload);
       
-      console.log('CheckoutWithBrick - Pedido criado:', orderResponse);
+      if (import.meta.env.DEV) console.log('CheckoutWithBrick - Pedido criado:', orderResponse);
 
       // Salvar dados do pedido
       setOrderData(orderResponse);
@@ -175,15 +178,17 @@ export function CheckoutWithBrick({ isOpen, onClose, onSuccess }: CheckoutWithBr
 
   const handlePaymentSubmit = async (data: any) => {
     try {
-      console.log('🔵 CheckoutWithBrick - Payment processed:', data);
-      console.log('🔵 CheckoutWithBrick - Data structure:', {
-        paymentType: data.paymentType,
-        selectedPaymentMethod: data.selectedPaymentMethod,
-        formData: data.formData,
-        status: data.status,
-        id: data.id,
-        external_reference: data.external_reference,
-      });
+      if (import.meta.env.DEV) {
+        console.log('🔵 CheckoutWithBrick - Payment processed:', data);
+        console.log('🔵 CheckoutWithBrick - Data structure:', {
+          paymentType: data.paymentType,
+          selectedPaymentMethod: data.selectedPaymentMethod,
+          formData: data.formData,
+          status: data.status,
+          id: data.id,
+          external_reference: data.external_reference,
+        });
+      }
 
       // Extrair informações do pagamento
       const paymentMethod = data.formData?.payment_method_id || 
@@ -208,13 +213,15 @@ export function CheckoutWithBrick({ isOpen, onClose, onSuccess }: CheckoutWithBr
                           data.formData?.status_detail || 
                           '';
 
-      console.log('🔵 CheckoutWithBrick - Extracted data:', {
-        paymentMethod,
-        paymentId,
-        externalReference,
-        status,
-        statusDetail,
-      });
+      if (import.meta.env.DEV) {
+        console.log('🔵 CheckoutWithBrick - Extracted data:', {
+          paymentMethod,
+          paymentId,
+          externalReference,
+          status,
+          statusDetail,
+        });
+      }
 
       // Determinar para qual página redirecionar
       let redirectUrl = '';
@@ -223,7 +230,7 @@ export function CheckoutWithBrick({ isOpen, onClose, onSuccess }: CheckoutWithBr
       if (paymentMethod === 'pix' || 
           data.paymentType === 'bank_transfer' || 
           data.selectedPaymentMethod === 'bank_transfer') {
-        console.log('💳 CheckoutWithBrick - PIX detectado, redirecionando para pending');
+        if (import.meta.env.DEV) console.log('💳 CheckoutWithBrick - PIX detectado, redirecionando para pending');
         
         // Capturar dados do PIX se disponíveis
         const pixData = data.point_of_interaction?.transaction_data || 
@@ -242,10 +249,12 @@ export function CheckoutWithBrick({ isOpen, onClose, onSuccess }: CheckoutWithBr
           };
           
           localStorage.setItem('pixPaymentData', JSON.stringify(pixPaymentData));
-          console.log('💾 CheckoutWithBrick - Dados do PIX salvos no localStorage:', pixPaymentData);
+          if (import.meta.env.DEV) console.log('💾 CheckoutWithBrick - Dados do PIX salvos no localStorage:', pixPaymentData);
         } else {
-          console.warn('⚠️ CheckoutWithBrick - PIX detectado mas dados do QR Code não encontrados');
-          console.log('⚠️ CheckoutWithBrick - Estrutura completa dos dados:', JSON.stringify(data, null, 2));
+          if (import.meta.env.DEV) {
+            console.warn('⚠️ CheckoutWithBrick - PIX detectado mas dados do QR Code não encontrados');
+            console.log('⚠️ CheckoutWithBrick - Estrutura completa dos dados:', JSON.stringify(data, null, 2));
+          }
         }
         
         redirectUrl = `/checkout/pending?payment_id=${paymentId}&external_reference=${externalReference}&payment_type_id=pix`;
@@ -253,19 +262,19 @@ export function CheckoutWithBrick({ isOpen, onClose, onSuccess }: CheckoutWithBr
       } 
       // Cartão aprovado
       else if (status === 'approved') {
-        console.log('✅ CheckoutWithBrick - Pagamento aprovado, redirecionando para success');
+        if (import.meta.env.DEV) console.log('✅ CheckoutWithBrick - Pagamento aprovado, redirecionando para success');
         redirectUrl = `/checkout/success?payment_id=${paymentId}&external_reference=${externalReference}`;
         toast.success('Pagamento aprovado com sucesso!');
       } 
       // Cartão recusado
       else if (status === 'rejected' || status === 'cancelled') {
-        console.log('❌ CheckoutWithBrick - Pagamento recusado, redirecionando para failure');
+        if (import.meta.env.DEV) console.log('❌ CheckoutWithBrick - Pagamento recusado, redirecionando para failure');
         redirectUrl = `/checkout/failure?payment_id=${paymentId}&status_detail=${statusDetail || 'generic_error'}`;
         toast.error('Pagamento não foi aprovado.');
       } 
       // Outros casos pendentes (boleto, etc)
       else {
-        console.log('⏳ CheckoutWithBrick - Pagamento pendente, redirecionando para pending');
+        if (import.meta.env.DEV) console.log('⏳ CheckoutWithBrick - Pagamento pendente, redirecionando para pending');
         redirectUrl = `/checkout/pending?payment_id=${paymentId}&external_reference=${externalReference}&payment_type_id=${paymentMethod}`;
         toast.success('Pagamento processado! Aguardando confirmação.');
       }
@@ -291,7 +300,7 @@ export function CheckoutWithBrick({ isOpen, onClose, onSuccess }: CheckoutWithBr
       }
 
       // Redirecionar usando window.location.href para garantir recarregamento
-      console.log('🔵 CheckoutWithBrick - Redirecionando para:', redirectUrl);
+      if (import.meta.env.DEV) console.log('🔵 CheckoutWithBrick - Redirecionando para:', redirectUrl);
       window.location.href = redirectUrl;
 
     } catch (error) {
@@ -309,7 +318,7 @@ export function CheckoutWithBrick({ isOpen, onClose, onSuccess }: CheckoutWithBr
   };
 
   const handlePaymentReady = () => {
-    console.log('Payment Brick está pronto');
+    if (import.meta.env.DEV) console.log('Payment Brick está pronto');
   };
 
   const handleBackToForm = () => {
@@ -504,13 +513,15 @@ export function CheckoutWithBrick({ isOpen, onClose, onSuccess }: CheckoutWithBr
                 );
               }
               
-              console.log('CheckoutWithBrick - Renderizando PaymentBrick com dados:', {
-                amount: orderData.totals.total,
-                itemsCount: cart.items.length,
-                payerEmail: customerData.email,
-                payerName: customerData.name,
-                externalReference: orderData.externalReference,
-              });
+              if (import.meta.env.DEV) {
+                console.log('CheckoutWithBrick - Renderizando PaymentBrick com dados:', {
+                  amount: orderData.totals.total,
+                  itemsCount: cart.items.length,
+                  payerEmail: customerData.email,
+                  payerName: customerData.name,
+                  externalReference: orderData.externalReference,
+                });
+              }
               
               return (
                 <div className="payment-step-container">

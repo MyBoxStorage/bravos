@@ -35,9 +35,11 @@ export function PaymentBrick({
   onSubmit,
   onError,
 }: PaymentBrickProps) {
-  console.log('PaymentBrick - Componente renderizado');
-  console.log('PaymentBrick - Props:', { amount, itemsCount: items.length, payerEmail, payerName, externalReference });
-  
+  if (import.meta.env.DEV) {
+    console.log('PaymentBrick - Componente renderizado');
+    console.log('PaymentBrick - Props:', { amount, itemsCount: items.length, payerEmail, payerName, externalReference });
+  }
+
   // Validação: externalReference é OBRIGATÓRIO
   // Não gerar fallback - deve vir do Order criado no backend
   if (!externalReference || externalReference.trim() === '') {
@@ -68,8 +70,10 @@ export function PaymentBrick({
   // Prepara os dados de inicialização do Payment Brick
   // Usando useMemo para evitar recriações desnecessárias
   const initialization = useMemo(() => {
-    console.log('PaymentBrick - Criando initialization object');
-    console.log('PaymentBrick - Usando externalReference do pedido:', externalReference);
+    if (import.meta.env.DEV) {
+      console.log('PaymentBrick - Criando initialization object');
+      console.log('PaymentBrick - Usando externalReference do pedido:', externalReference);
+    }
 
     return {
       amount: amount,
@@ -104,11 +108,11 @@ export function PaymentBrick({
     };
   }, [amount, items, payerEmail, payerName, externalReference]);
 
-  console.log('PaymentBrick - Initialization:', initialization);
-  console.log('PaymentBrick - Renderizando componente Payment do Mercado Pago');
-
-  // Log antes do return
-  console.log('PaymentBrick - Dentro do return, renderizando Payment');
+  if (import.meta.env.DEV) {
+    console.log('PaymentBrick - Initialization:', initialization);
+    console.log('PaymentBrick - Renderizando componente Payment do Mercado Pago');
+    console.log('PaymentBrick - Dentro do return, renderizando Payment');
+  }
 
   return (
     <div 
@@ -132,8 +136,8 @@ export function PaymentBrick({
           },
         }}
         onSubmit={async (formData: any) => {
-          console.log('PaymentBrick - onSubmit chamado com dados:', formData);
-          
+          if (import.meta.env.DEV) console.log('PaymentBrick - onSubmit chamado com dados:', formData);
+
           // Se houver callback customizado, chama primeiro
           // O callback pode fazer o redirecionamento
           if (onSubmit) {
@@ -143,29 +147,30 @@ export function PaymentBrick({
               console.error('PaymentBrick - Erro no callback onSubmit:', error);
             }
           } else {
-            // Fallback: redirecionamento padrão se não houver callback
-            console.log('PaymentBrick - Nenhum callback onSubmit, usando redirecionamento padrão');
-            
+            if (import.meta.env.DEV) console.log('PaymentBrick - Nenhum callback onSubmit, usando redirecionamento padrão');
+
             if (formData?.status === 'approved') {
-              console.log('✅ PaymentBrick - Pagamento aprovado, redirecionando...');
+              if (import.meta.env.DEV) console.log('✅ PaymentBrick - Pagamento aprovado, redirecionando...');
               const successUrl = `${window.location.origin}/checkout/success?payment_id=${formData.id}&status=approved&external_reference=${formData.external_reference || ''}`;
               window.location.href = successUrl;
             } else if (formData?.status === 'pending') {
-              console.log('⏳ PaymentBrick - Pagamento pendente, redirecionando...');
+              if (import.meta.env.DEV) console.log('⏳ PaymentBrick - Pagamento pendente, redirecionando...');
               const pendingUrl = `${window.location.origin}/checkout/pending?payment_id=${formData.id}&status=pending&external_reference=${formData.external_reference || ''}`;
               window.location.href = pendingUrl;
             } else if (formData?.status === 'rejected' || formData?.status === 'cancelled') {
-              console.log('❌ PaymentBrick - Pagamento rejeitado, redirecionando...');
+              if (import.meta.env.DEV) console.log('❌ PaymentBrick - Pagamento rejeitado, redirecionando...');
               const failureUrl = `${window.location.origin}/checkout/failure?payment_id=${formData.id}&status=${formData.status}&status_detail=${formData.status_detail || ''}`;
               window.location.href = failureUrl;
             }
           }
-          
+
           return Promise.resolve();
         }}
         onReady={() => {
-          console.log('✅ PaymentBrick - onReady chamado - Brick está pronto!');
-          console.log('✅ PaymentBrick - Métodos de pagamento devem estar visíveis agora');
+          if (import.meta.env.DEV) {
+            console.log('✅ PaymentBrick - onReady chamado - Brick está pronto!');
+            console.log('✅ PaymentBrick - Métodos de pagamento devem estar visíveis agora');
+          }
           onReady?.();
         }}
         onError={(error) => {

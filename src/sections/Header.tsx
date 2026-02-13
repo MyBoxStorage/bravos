@@ -292,7 +292,7 @@ export function Header() {
         isOpen={isCheckoutOpen}
         onClose={() => setIsCheckoutOpen(false)}
         onSuccess={(paymentId) => {
-          console.log('Pagamento processado com sucesso:', paymentId);
+          if (import.meta.env.DEV) console.log('Pagamento processado com sucesso:', paymentId);
         }}
       />
     </header>

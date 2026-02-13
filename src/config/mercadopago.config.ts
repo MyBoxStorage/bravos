@@ -85,9 +85,11 @@ export function generateExternalReference(orderId?: string): string {
 export function validateStatementDescriptor(descriptor: string): string {
   const maxLength = 22;
   if (descriptor.length > maxLength) {
-    console.warn(
-      `Statement descriptor excede ${maxLength} caracteres. Será truncado.`
-    );
+    if (import.meta.env.DEV) {
+      console.warn(
+        `Statement descriptor excede ${maxLength} caracteres. Será truncado.`
+      );
+    }
     return descriptor.substring(0, maxLength);
   }
   return descriptor;
