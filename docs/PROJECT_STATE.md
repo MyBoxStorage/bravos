@@ -99,3 +99,31 @@ API_URL=https://bravosbackend.fly.dev ADMIN_TOKEN=<token> APPLY=true node script
 - Pedidos abandonados sem pagamento são cancelados manualmente (por enquanto).
 - Endpoint: `POST /api/internal/cancel-abandoned` com `x-admin-token`.
 - Rate limit: 5 req / 5 min.
+
+## Cancel Abandoned CRON
+
+O workflow **Cancel Abandoned (Production)** roda automaticamente e manualmente.
+
+### Cron horário (dryRun)
+
+- **Schedule:** `0 * * * *` — 1x por hora
+- **Modo:** sempre `dryRun=true` (não cancela, só simula)
+- Objetivo: verificar se existem pedidos abandonados e registrar em `admin_events` (CANCEL_ABANDONED_DRYRUN)
+
+### Rodar manualmente (apply)
+
+Para aplicar o cancelamento de fato:
+
+1. GitHub → repositório **bravos** → aba **Actions**
+2. Na barra lateral, clique em **Cancel Abandoned (Production)**
+3. Botão **Run workflow** (canto direito)
+4. Preencha os inputs:
+   - **apply:** `true` (obrigatório para cancelar; use `false` para dryRun)
+   - **olderThanMinutes:** `60` (padrão)
+   - **limit:** `50` (padrão)
+5. Clique em **Run workflow**
+
+### Parâmetros recomendados
+
+- `olderThanMinutes`: 60 (mín. 15) — pedidos mais antigos que 60 min sem pagamento
+- `limit`: 50 (máx. 200) — quantidade máxima de pedidos por execução

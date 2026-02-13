@@ -1,0 +1,83 @@
+name: Cancel Abandoned (Production)
+
+on:
+  schedule:
+    # Every hour (dryRun only)
+    - cron: '0 * * * *'
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: 'Apply cancellation (dryRun=false). Set to "true" to cancel orders.'
+        required: false
+        default: 'false'
+        type: string
+      olderThanMinutes:
+        description: 'Minimum age in minutes for orders to cancel'
+        required: false
+        default: '60'
+        type: string
+      limit:
+        description: 'Max orders to process per run'
+        required: false
+        default: '50'
+        type: string
+
+concurrency:
+  group: cancel-abandoned-production
+  cancel-in-progress: false
+
+jobs:
+  cancel-abandoned:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Validate secrets
+        run: |
+          if [ -z "${{ secrets.MONITOR_API_URL }}" ]; then
+            echo "::error::MONITOR_API_URL secret is not configured. Add it in GitHub Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+          if [ -z "${{ secrets.ADMIN_TOKEN }}" ]; then
+            echo "::error::ADMIN_TOKEN secret is not configured. Add it in GitHub Settings → Secrets and variables → Actions"
+            exit 1
+          fi
+          echo "Secrets configured"
+
+      - name: Cancel abandoned (dryrun or apply)
+        env:
+          API_URL: ${{ secrets.MONITOR_API_URL }}
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          # schedule: always dryRun. workflow_dispatch: apply only if input apply == "true"
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            DRY_RUN="true"
+            OLDER="60"
+            LIMIT="50"
+          else
+            if [ "${{ github.event.inputs.apply }}" = "true" ]; then
+              DRY_RUN="false"
+            else
+              DRY_RUN="true"
+            fi
+            OLDER="${{ github.event.inputs.olderThanMinutes || '60' }}"
+            LIMIT="${{ github.event.inputs.limit || '50' }}"
+          fi
+
+          echo "dryRun=$DRY_RUN olderThanMinutes=$OLDER limit=$LIMIT"
+          resp=$(curl -s -w "\n%{http_code}" -X POST "$API_URL/api/internal/cancel-abandoned" \
+            -H "Content-Type: application/json" \
+            -H "x-admin-token: $ADMIN_TOKEN" \
+            -d "{\"dryRun\":$DRY_RUN,\"olderThanMinutes\":$OLDER,\"limit\":$LIMIT}")
+
+          body=$(echo "$resp" | head -n -1)
+          code=$(echo "$resp" | tail -n 1)
+
+          echo "Response status: $code"
+          echo "Response body: $body"
+
+          if [ "$code" != "200" ]; then
+            echo "::error::cancel-abandoned returned $code. Body: $body"
+            exit 1
+          fi
+
+          echo "ok (status 200)"
