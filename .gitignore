@@ -53,3 +53,4 @@ out/
 # Misc
 .clawdbot-debug/
 *.backup
+e2e-smoke-staging-output.txt
