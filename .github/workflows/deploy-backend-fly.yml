@@ -56,13 +56,13 @@ jobs:
       - name: Setup Fly.io CLI
         uses: superfly/flyctl-actions/setup-flyctl@master
 
+      - name: Flyctl version
+        run: flyctl version
+
       - name: Deploy to Fly.io
         run: |
-          flyctl deploy server \
-            --remote-only \
-            --config server/fly.toml \
-            --dockerfile server/Dockerfile \
-            -a bravosbackend
+          set -x
+          flyctl deploy server --remote-only --config server/fly.toml --dockerfile server/Dockerfile -a bravosbackend
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
