@@ -86,14 +86,30 @@ jobs:
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
 
-      - name: Smoke — GET /health
+      - name: Verify runtime SHA
         env:
           BACKEND_URL: ${{ secrets.MONITOR_API_URL }}
         run: |
           URL="${BACKEND_URL:-https://bravosbackend.fly.dev}"
-          code=$(curl -s -o /dev/null -w "%{http_code}" "$URL/health")
-          if [ "$code" != "200" ]; then echo "Health check failed: $code"; exit 1; fi
-          echo "Health: 200"
+          EXPECTED_SHA="${{ github.sha }}"
+          echo "Expected buildSha: $EXPECTED_SHA"
+          for i in 1 2 3; do
+            echo "Attempt $i/3..."
+            resp=$(curl -fsS "$URL/health" 2>/dev/null || true)
+            echo "Response: $resp"
+            if echo "$resp" | grep -q '"buildSha"'; then
+              if echo "$resp" | grep -q "$EXPECTED_SHA"; then
+                echo "buildSha matches $EXPECTED_SHA"
+                exit 0
+              fi
+              echo "::error::buildSha in response does not match expected. Expected: $EXPECTED_SHA. Body: $resp"
+              exit 1
+            fi
+            echo "buildSha key missing from response, retrying in 5s..."
+            sleep 5
+          done
+          echo "::error::buildSha not found in /health after 3 attempts. Expected: $EXPECTED_SHA. Last body: $resp"
+          exit 1
 
       - name: Smoke — GET /api/internal/monitor
         env:
