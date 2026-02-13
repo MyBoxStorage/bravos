@@ -43,15 +43,9 @@ npm run build
 
 ## PRODUCTION DEPLOY COMMANDS
 
-### Prisma Migrations (DO NOT RUN, instructions only)
-```bash
-# On Fly.io after deploy:
-fly ssh console
-cd /app
-npx prisma generate
-npx prisma migrate deploy --schema=prisma/schema.prisma
-exit
-```
+### Prisma Migrations
+Production migrations run automatically on Fly via `release_command` in `server/fly.toml`:
+`npx prisma migrate deploy --schema=./prisma/schema.prisma`. No manual steps required.
 
 ### Health Check
 ```bash

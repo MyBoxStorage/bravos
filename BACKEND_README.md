@@ -188,23 +188,21 @@ NODE_ENV=development
 
 ### 4. Executar Migrations
 
-**Importante:** Se você adicionou novos valores ao enum `OrderStatus`, execute:
+**Produção (Fly):** Migrations rodam automaticamente no deploy via `release_command`:
+`npx prisma migrate deploy --schema=./prisma/schema.prisma`. Nenhum passo manual necessário.
 
-```bash
-# Aplicar migration manual para novos status Montink
-psql $DATABASE_URL -f prisma/migrations/add_montink_order_statuses.sql
-
-# OU usar Prisma migrate (se DATABASE_URL estiver configurado)
-npx prisma migrate dev
-```
+**Local / desenvolvimento:**
 
 ```bash
 # Gerar Prisma Client
 npm run prisma:generate
 
-# Criar e aplicar migrations
+# Criar e aplicar migrations (DEV-ONLY)
 npm run prisma:migrate
 ```
+
+**Importante (dev):** Se adicionou novos valores ao enum `OrderStatus`, execute também (quando aplicável):
+`psql $DATABASE_URL -f prisma/migrations/add_montink_order_statuses.sql`
 
 ## 🚀 Executar
 
