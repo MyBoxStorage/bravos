@@ -21,6 +21,11 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
+      - name: Log deployed commit
+        run: |
+          echo "Deploying commit SHA: $(git rev-parse HEAD)"
+          echo "Commit message: $(git log -1 --pretty=%B)"
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
@@ -82,3 +87,27 @@ jobs:
         run: |
           URL="${BACKEND_URL:-https://bravosbackend.fly.dev}"
           node scripts/monitor-check.js "$URL" "$ADMIN_TOKEN"
+
+      - name: Smoke — POST /api/internal/cancel-abandoned (dryRun)
+        env:
+          BACKEND_URL: ${{ secrets.MONITOR_API_URL }}
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          URL="${BACKEND_URL:-https://bravosbackend.fly.dev}"
+          code=$(curl -s -o /tmp/cancel-abandoned.json -w "%{http_code}" \
+            -X POST "$URL/api/internal/cancel-abandoned" \
+            -H "x-admin-token: $ADMIN_TOKEN" \
+            -H "Content-Type: application/json" \
+            -H "Accept: application/json" \
+            -d '{"olderThanMinutes":60,"limit":10,"dryRun":true}')
+          echo "cancel-abandoned status: $code"
+          if [ "$code" = "404" ]; then
+            echo "::error::cancel-abandoned returned 404 - endpoint not deployed"
+            exit 1
+          fi
+          if [ "$code" != "200" ] && [ "$code" != "401" ]; then
+            echo "::error::cancel-abandoned returned $code"
+            head -c 200 /tmp/cancel-abandoned.json
+            exit 1
+          fi
+          echo "cancel-abandoned smoke: OK (status $code)"
