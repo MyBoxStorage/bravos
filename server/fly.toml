@@ -2,7 +2,7 @@
 # Para deploy via Git: use fly.toml na RAIZ (config path = "fly.toml")
 # https://fly.io/docs/reference/configuration/
 
-app = "bravos-backend"
+app = "bravosbackend"
 primary_region = "gru"  # São Paulo, Brazil
 
 [build]

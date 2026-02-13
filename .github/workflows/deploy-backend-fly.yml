@@ -1,12 +1,18 @@
 name: Deploy Backend to Fly.io
 
+# Required secrets: DATABASE_URL, FLY_API_TOKEN, ADMIN_TOKEN. Optional: MONITOR_API_URL (smoke fallback: bravosbackend.fly.dev)
 on:
+  workflow_dispatch:
   push:
     branches: [main]
     paths:
       - 'server/**'
       - 'prisma/**'
       - '.github/workflows/deploy-backend-fly.yml'
+      - 'package.json'
+      - 'vite.config.*'
+      - 'tsconfig*.json'
+      - 'src/**'
 
 jobs:
   deploy:
@@ -14,6 +20,28 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'npm'
+
+      - name: Build frontend
+        run: npm ci && npm run build
+
+      - name: Build backend
+        run: cd server && npm ci && npm run build
+
+      - name: Prisma migrate status
+        run: npx prisma migrate status --schema=./prisma/schema.prisma
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
+
+      - name: Prisma migrate deploy
+        run: npx prisma migrate deploy --schema=./prisma/schema.prisma
+        env:
+          DATABASE_URL: ${{ secrets.DATABASE_URL }}
 
       - name: Setup Fly.io CLI
         uses: superfly/flyctl-actions/setup-flyctl@master
@@ -25,6 +53,23 @@ jobs:
             --config server/fly.toml \
             --dockerfile server/Dockerfile \
             --path . \
-            -a bravos-backend
+            -a bravosbackend
         env:
           FLY_API_TOKEN: ${{ secrets.FLY_API_TOKEN }}
+
+      - name: Smoke — GET /health
+        env:
+          BACKEND_URL: ${{ secrets.MONITOR_API_URL }}
+        run: |
+          URL="${BACKEND_URL:-https://bravosbackend.fly.dev}"
+          code=$(curl -s -o /dev/null -w "%{http_code}" "$URL/health")
+          if [ "$code" != "200" ]; then echo "Health check failed: $code"; exit 1; fi
+          echo "Health: 200"
+
+      - name: Smoke — GET /api/internal/monitor
+        env:
+          BACKEND_URL: ${{ secrets.MONITOR_API_URL }}
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          URL="${BACKEND_URL:-https://bravosbackend.fly.dev}"
+          node scripts/monitor-check.js "$URL" "$ADMIN_TOKEN"
