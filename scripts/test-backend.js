@@ -106,6 +106,16 @@ async function main() {
   });
   preferenceOk ? passed++ : failed++;
 
+  // 6. GET /api/mp/payment/:paymentId (deve retornar JSON; id inválido -> ok: false ou 400/502)
+  const getPaymentOk = await test('GET /api/mp/payment/:paymentId', async () => {
+    const res = await fetch(`${BASE_URL}/api/mp/payment/0`);
+    const data = await res.json();
+    if (data && typeof data.ok !== 'undefined') return; // formato esperado
+    if (res.status === 400 || res.status === 502) return;
+    throw new Error(`Resposta inesperada: ${res.status}`);
+  });
+  getPaymentOk ? passed++ : failed++;
+
   console.log('\n--- Resultado ---');
   console.log(`Passaram: ${passed} | Falharam: ${failed}`);
   process.exit(failed > 0 ? 1 : 0);

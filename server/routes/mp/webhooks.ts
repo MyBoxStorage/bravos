@@ -1,16 +1,76 @@
 /**
  * POST /api/mp/webhooks
- * 
+ *
  * Recebe notificações do Mercado Pago sobre mudanças de status de pagamento
- * 
- * Implementa idempotência via tabela WebhookEvent (DB) para evitar processamento duplicado
+ *
+ * - Valida assinatura x-signature (HMAC SHA256) com MP_WEBHOOK_SECRET
+ * - Implementa idempotência via tabela WebhookEvent (DB) para evitar processamento duplicado
  */
 
+import crypto from 'crypto';
 import { Request, Response } from 'express';
 import { prisma } from '../../utils/prisma.js';
 import { logger } from '../../utils/logger.js';
 
+/**
+ * Valida assinatura do webhook conforme documentação Mercado Pago.
+ * Header x-signature: ts=<timestamp>,v1=<hmac_hex>
+ * Manifest: id:<data.id>;request-id:<x-request-id>;ts:<ts>;
+ * HMAC SHA256(secret, manifest) deve ser igual a v1.
+ */
+function verifyWebhookSignature(
+  secret: string,
+  xSignature: string | undefined,
+  xRequestId: string | undefined,
+  dataId: string | undefined
+): boolean {
+  if (!xSignature || !xSignature.trim()) return false;
+
+  const parts = xSignature.split(',');
+  let ts: string | null = null;
+  let hash: string | null = null;
+  for (const part of parts) {
+    const [key, value] = part.split('=').map((s) => s.trim());
+    if (key === 'ts') ts = value ?? null;
+    else if (key === 'v1') hash = value ?? null;
+  }
+  if (!ts || !hash) return false;
+
+  const partsManifest: string[] = [];
+  if (dataId != null && dataId !== '') {
+    const id = typeof dataId === 'string' && /^[a-zA-Z0-9]+$/.test(dataId) ? dataId.toLowerCase() : dataId;
+    partsManifest.push(`id:${id}`);
+  }
+  if (xRequestId != null && xRequestId !== '') partsManifest.push(`request-id:${xRequestId}`);
+  partsManifest.push(`ts:${ts}`);
+  const manifest = partsManifest.join(';') + ';';
+
+  const expected = crypto.createHmac('sha256', secret).update(manifest).digest('hex');
+  return expected === hash;
+}
+
 export async function webhookHandler(req: Request, res: Response) {
+  const webhookSecret = process.env.MP_WEBHOOK_SECRET;
+  if (!webhookSecret || webhookSecret.trim() === '') {
+    logger.warn('Webhook rejected: MP_WEBHOOK_SECRET not configured');
+    res.status(401).json({ error: 'Webhook secret not configured' });
+    return;
+  }
+
+  const signature = req.headers['x-signature'];
+  const xSignature = typeof signature === 'string' ? signature : Array.isArray(signature) ? signature[0] : undefined;
+  const xRequestId = req.headers['x-request-id'];
+  const reqId = typeof xRequestId === 'string' ? xRequestId : Array.isArray(xRequestId) ? xRequestId[0] : undefined;
+  const dataIdQuery = req.query['data.id'];
+  const dataIdBody = req.body?.data?.id;
+  const dataId = dataIdQuery != null ? String(dataIdQuery) : dataIdBody != null ? String(dataIdBody) : undefined;
+
+  if (!verifyWebhookSignature(webhookSecret, xSignature, reqId, dataId)) {
+    logger.warn('Webhook rejected: invalid or missing x-signature');
+    res.status(401).json({ error: 'Invalid signature' });
+    return;
+  }
+
   // Sempre responder 200 rapidamente para o Mercado Pago
   // Processamento assíncrono acontece após resposta
   res.status(200).json({ received: true });

@@ -11,12 +11,14 @@ import dotenv from 'dotenv';
 import { createPayment } from './routes/mp/create-payment.js';
 import { createPreference } from './routes/mp/create-preference.js';
 import { webhookHandler } from './routes/mp/webhooks.js';
+import { getPayment } from './routes/mp/get-payment.js';
 import { healthCheck } from './routes/health.js';
 import { shippingQuote } from './routes/shipping/quote.js';
 import { createOrder } from './routes/checkout/create-order.js';
 import { getOrder } from './routes/orders/get-order.js';
 import { markMontink, validateAdminToken } from './routes/orders/mark-montink.js';
 import { listAdminOrders, exportAdminOrder } from './routes/admin/orders.js';
+import { createRateLimiter } from './utils/rateLimiter.js';
 
 // Carrega variáveis de ambiente
 dotenv.config();
@@ -37,66 +39,33 @@ app.set('trust proxy', 1);
 
 const PORT = parseInt(process.env.PORT || '3001', 10);
 
-/**
- * Rate limiting simples em memória (por IP + rota)
- *
- * MVP-safe: sem dependências externas, apenas em memória do processo atual.
- */
-type RateLimitEntry = {
-  count: number;
-  firstRequestAt: number;
-};
+const WINDOW_MS = 5 * 60 * 1000;
 
-const rateLimitStore: Record<string, RateLimitEntry> = {};
-
-function createRouteRateLimiter(routeKey: string, maxRequests: number, windowMs: number) {
-  return (req: express.Request, res: express.Response, next: express.NextFunction) => {
-    try {
-      const ip =
-        (req.headers['x-forwarded-for'] as string) ||
-        req.socket.remoteAddress ||
-        req.ip ||
-        'unknown';
-
-      const key = `${ip}:${routeKey}`;
-      const now = Date.now();
-      const entry = rateLimitStore[key];
-
-      if (!entry) {
-        rateLimitStore[key] = { count: 1, firstRequestAt: now };
-        return next();
-      }
-
-      const elapsed = now - entry.firstRequestAt;
-
-      if (elapsed > windowMs) {
-        // Reinicia janela
-        rateLimitStore[key] = { count: 1, firstRequestAt: now };
-        return next();
-      }
-
-      if (entry.count >= maxRequests) {
-        return res.status(429).json({ error: 'Too many requests' });
-      }
-
-      entry.count += 1;
-      return next();
-    } catch {
-      // Em caso de erro no limiter, não bloquear a requisição
-      return next();
-    }
-  };
-}
-
-// Limiters específicos por rota
-const rateLimitGetOrder = createRouteRateLimiter('GET:/api/orders', 60, 5 * 60 * 1000);
-const rateLimitMarkMontink = createRouteRateLimiter('POST:/api/orders/mark-montink', 20, 5 * 60 * 1000);
-const rateLimitAdminListOrders = createRouteRateLimiter('GET:/api/admin/orders', 30, 5 * 60 * 1000);
-const rateLimitAdminExportOrder = createRouteRateLimiter(
-  'GET:/api/admin/orders/export',
-  30,
-  5 * 60 * 1000
-);
+const rateLimitGetOrder = createRateLimiter({
+  routeKey: 'GET:/api/orders',
+  maxRequests: 60,
+  windowMs: WINDOW_MS,
+});
+const rateLimitGetPayment = createRateLimiter({
+  routeKey: 'GET:/api/mp/payment',
+  maxRequests: 60,
+  windowMs: WINDOW_MS,
+});
+const rateLimitMarkMontink = createRateLimiter({
+  routeKey: 'POST:/api/orders/mark-montink',
+  maxRequests: 20,
+  windowMs: WINDOW_MS,
+});
+const rateLimitAdminListOrders = createRateLimiter({
+  routeKey: 'GET:/api/admin/orders',
+  maxRequests: 30,
+  windowMs: WINDOW_MS,
+});
+const rateLimitAdminExportOrder = createRateLimiter({
+  routeKey: 'GET:/api/admin/orders/export',
+  maxRequests: 30,
+  windowMs: WINDOW_MS,
+});
 
 // Middlewares
 // CORS: Support multiple origins (production + staging if needed)
@@ -132,6 +101,7 @@ app.use((req, res, next) => {
 app.get('/health', healthCheck);
 app.post('/api/mp/create-payment', createPayment);
 app.post('/api/mp/create-preference', createPreference);
+app.get('/api/mp/payment/:paymentId', rateLimitGetPayment, getPayment);
 app.post('/api/mp/webhooks', webhookHandler);
 app.post('/api/shipping/quote', shippingQuote);
 app.post('/api/checkout/create-order', createOrder);
@@ -172,9 +142,18 @@ app.use((req, res) => {
 
 // Start server
 app.listen(PORT, '0.0.0.0', () => {
+  const envKeys = [
+    'DATABASE_URL',
+    'MP_ACCESS_TOKEN',
+    'MP_WEBHOOK_SECRET',
+    'FRONTEND_URL',
+    'BACKEND_URL',
+    'ADMIN_TOKEN',
+  ] as const;
+  const status = envKeys.map((k) => `${k}=${process.env[k] ? 'set' : 'not set'}`).join(', ');
   console.log(`🚀 Server running on port ${PORT}`);
   console.log(`📊 Health check: http://0.0.0.0:${PORT}/health`);
-  console.log(`💳 Mercado Pago integration ready`);
+  console.log(`🔐 Env: ${status}`);
   console.log(`🌍 Environment: ${process.env.NODE_ENV || 'development'}`);
 });
 
