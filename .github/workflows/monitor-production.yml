@@ -14,6 +14,18 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
+      - name: Validate secrets
+        run: |
+          if [ -z "${{ secrets.MONITOR_API_URL }}" ]; then
+            echo "::error::MONITOR_API_URL secret is not configured"
+            exit 1
+          fi
+          if [ -z "${{ secrets.ADMIN_TOKEN }}" ]; then
+            echo "::error::ADMIN_TOKEN secret is not configured"
+            exit 1
+          fi
+          echo "Secrets configured"
+
       - name: Setup Node
         uses: actions/setup-node@v4
         with:
