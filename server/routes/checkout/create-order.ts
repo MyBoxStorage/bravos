@@ -16,6 +16,7 @@ import { Request, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../../utils/prisma.js';
 import { logger } from '../../utils/logger.js';
+import { errorMeta } from '../../utils/logging.js';
 import { randomUUID } from 'crypto';
 import {
   getClientIp,
@@ -200,7 +201,7 @@ export async function createOrder(req: Request, res: Response) {
     });
 
   } catch (error) {
-    logger.error('Create order error:', error);
+    logger.error('Create order error:', errorMeta(error));
     
     res.status(500).json({
       error: 'Internal server error',

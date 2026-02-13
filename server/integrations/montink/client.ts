@@ -5,6 +5,7 @@
  */
 
 import { logger } from '../../utils/logger.js';
+import { errorMeta } from '../../utils/logging.js';
 
 const MONTINK_BASE_URL = process.env.MONTINK_BASE_URL ?? 'https://api.montink.com.br';
 const MONTINK_API_TOKEN = process.env.MONTINK_API_TOKEN;
@@ -86,7 +87,7 @@ export async function montinkRequest<T = any>(
     }
     
     // Caso contrário, criar novo Error
-    logger.error(`Montink API Request Failed: ${method} ${url}`, error);
+    logger.error(`Montink API Request Failed: ${method} ${url}`, errorMeta(error));
     throw new Error(`Falha ao fazer requisição para Montink: ${error}`);
   }
 }

@@ -17,6 +17,7 @@ import { Request, Response } from 'express';
 import { PrismaClient } from '@prisma/client';
 import { z } from 'zod';
 import { logger } from '../../utils/logger.js';
+import { errorMeta } from '../../utils/logging.js';
 import {
   getClientIp,
   getClientUserAgent,
@@ -242,7 +243,7 @@ export async function createPreference(req: Request, res: Response) {
     });
 
   } catch (error) {
-    logger.error('Create preference error:', error);
+    logger.error('Create preference error:', errorMeta(error));
     
     res.status(500).json({
       error: 'Internal server error',

@@ -8,6 +8,7 @@
 
 import { Request, Response } from 'express';
 import { logger } from '../../utils/logger.js';
+import { errorMeta } from '../../utils/logging.js';
 
 export async function getPayment(req: Request, res: Response) {
   const raw = req.params.paymentId;
@@ -95,7 +96,7 @@ export async function getPayment(req: Request, res: Response) {
       transaction_details,
     });
   } catch (err) {
-    logger.error('getPayment error:', err);
+    logger.error('getPayment error:', errorMeta(err));
     return res.status(500).json({
       ok: false,
       error: 'MP_GET_PAYMENT_FAILED',

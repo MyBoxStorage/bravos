@@ -16,6 +16,7 @@ import { Request, Response } from 'express';
 import { z } from 'zod';
 import { prisma } from '../../utils/prisma.js';
 import { logger } from '../../utils/logger.js';
+import { errorMeta } from '../../utils/logging.js';
 import {
   getClientIp,
   getClientUserAgent,
@@ -251,7 +252,7 @@ export async function createPayment(req: Request, res: Response) {
     res.status(201).json(responseData);
 
   } catch (error) {
-    logger.error('Create payment error:', error);
+    logger.error('Create payment error:', errorMeta(error));
     
     res.status(500).json({
       error: 'Internal server error',

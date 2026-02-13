@@ -14,6 +14,7 @@
 import { Request, Response } from 'express';
 import { z } from 'zod';
 import { logger } from '../../utils/logger.js';
+import { errorMeta } from '../../utils/logging.js';
 import { getMontinkShippingQuote } from '../../integrations/montink/shipping.js';
 import { 
   SHIPPING_STRATEGY, 
@@ -112,7 +113,7 @@ export async function shippingQuote(req: Request, res: Response) {
     });
 
   } catch (error) {
-    logger.error('Shipping quote error:', error);
+    logger.error('Shipping quote error:', errorMeta(error));
     
     // Se estratégia for MONTINK_REQUIRED e Montink falhar, retornar erro
     if (SHIPPING_STRATEGY === 'MONTINK_REQUIRED') {
