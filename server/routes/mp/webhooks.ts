@@ -192,15 +192,33 @@ async function processPaymentEvent(paymentId: string, webhookEventId: string) {
       payment = await fetchMpPayment(paymentId);
     } catch (err) {
       const msg = err instanceof Error ? err.message : 'Unknown error';
-      logger.error('[WEBHOOK] Failed to fetch payment', { webhookEventId, paymentId, error: msg });
-      await prisma.webhookEvent.update({
-        where: { id: webhookEventId },
-        data: {
-          status: 'failed',
-          errorMessage: msg,
-          processedAt: new Date(),
-        },
-      });
+      const is404 = msg.includes('404');
+      if (is404) {
+        logger.info('[WEBHOOK] Payment not found (404), ignoring', {
+          eventId: paymentId,
+          provider: 'mercadopago',
+          httpStatus: 404,
+          action: 'ignored',
+        });
+        await prisma.webhookEvent.update({
+          where: { id: webhookEventId },
+          data: {
+            status: 'ignored',
+            errorMessage: 'MP_PAYMENT_NOT_FOUND_404',
+            processedAt: new Date(),
+          },
+        });
+      } else {
+        logger.error('[WEBHOOK] Failed to fetch payment', { webhookEventId, paymentId, error: msg });
+        await prisma.webhookEvent.update({
+          where: { id: webhookEventId },
+          data: {
+            status: 'failed',
+            errorMessage: msg,
+            processedAt: new Date(),
+          },
+        });
+      }
       return;
     }
 
