@@ -12,9 +12,9 @@ on:
         default: 'false'
         type: string
       olderThanMinutes:
-        description: 'Minimum age in minutes for orders to cancel'
+        description: 'Minimum age in minutes for orders to cancel (min 1440 = 24h)'
         required: false
-        default: '60'
+        default: '1440'
         type: string
       limit:
         description: 'Max orders to process per run'
@@ -48,10 +48,10 @@ jobs:
           API_URL: ${{ secrets.MONITOR_API_URL }}
           ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
         run: |
-          # schedule: always dryRun. workflow_dispatch: apply only if input apply == "true"
+          # schedule: always dryRun, olderThanMinutes=1440. workflow_dispatch: apply only if input apply == "true"
           if [ "${{ github.event_name }}" = "schedule" ]; then
             DRY_RUN="true"
-            OLDER="60"
+            OLDER="1440"
             LIMIT="50"
           else
             if [ "${{ github.event.inputs.apply }}" = "true" ]; then
@@ -59,8 +59,15 @@ jobs:
             else
               DRY_RUN="true"
             fi
-            OLDER="${{ github.event.inputs.olderThanMinutes || '60' }}"
+            OLDER="${{ github.event.inputs.olderThanMinutes || '1440' }}"
             LIMIT="${{ github.event.inputs.limit || '50' }}"
+          fi
+
+          # Guard: olderThanMinutes must be >= 1440 (24h) to avoid canceling legit in-progress checkouts
+          OLDER_INT=$(printf '%d' "$OLDER" 2>/dev/null || echo 0)
+          if [ "$OLDER_INT" -lt 1440 ] 2>/dev/null; then
+            echo "::error::olderThanMinutes=$OLDER is below minimum 1440 (24h). Aborting."
+            exit 1
           fi
 
           echo "dryRun=$DRY_RUN olderThanMinutes=$OLDER limit=$LIMIT"

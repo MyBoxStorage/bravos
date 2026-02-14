@@ -104,11 +104,19 @@ API_URL=https://bravosbackend.fly.dev ADMIN_TOKEN=<token> APPLY=true node script
 
 O workflow **Cancel Abandoned (Production)** roda automaticamente e manualmente.
 
+### Política (24h mínimo)
+
+- **olderThanMinutes** deve ser **>= 1440** (24 horas) em todas as execuções.
+- Motivo: evitar cancelar carrinhos em que o usuário ainda está no checkout (pagamento em andamento).
+- O workflow falha com `::error::` se `olderThanMinutes < 1440`.
+
 ### Cron horário (dryRun)
 
 - **Schedule:** `0 * * * *` — 1x por hora
 - **Modo:** sempre `dryRun=true` (não cancela, só simula)
-- Objetivo: verificar se existem pedidos abandonados e registrar em `admin_events` (CANCEL_ABANDONED_DRYRUN)
+- **olderThanMinutes:** 1440 (24h)
+- **limit:** 50
+- Objetivo: verificar se existem pedidos abandonados há 24h+ e registrar em `admin_events` (CANCEL_ABANDONED_DRYRUN)
 
 ### Rodar manualmente (apply)
 
@@ -119,11 +127,8 @@ Para aplicar o cancelamento de fato:
 3. Botão **Run workflow** (canto direito)
 4. Preencha os inputs:
    - **apply:** `true` (obrigatório para cancelar; use `false` para dryRun)
-   - **olderThanMinutes:** `60` (padrão)
+   - **olderThanMinutes:** `1440` (padrão; mínimo 1440)
    - **limit:** `50` (padrão)
 5. Clique em **Run workflow**
 
-### Parâmetros recomendados
-
-- `olderThanMinutes`: 60 (mín. 15) — pedidos mais antigos que 60 min sem pagamento
-- `limit`: 50 (máx. 200) — quantidade máxima de pedidos por execução
+O workflow exige `olderThanMinutes >= 1440` também no modo manual.
