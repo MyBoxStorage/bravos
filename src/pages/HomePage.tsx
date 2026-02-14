@@ -6,7 +6,7 @@ import { Hero } from '@/sections/Hero';
 import { SocialProof } from '@/sections/SocialProof';
 import { FeaturedProducts } from '@/sections/FeaturedProducts';
 import { VideoShowcase } from '@/sections/VideoShowcase';
-import { Customization } from '@/sections/Customization';
+import GeradorEstampas from '@/components/GeradorEstampas';
 import { Values } from '@/sections/Values';
 import { Testimonials } from '@/sections/Testimonials';
 import { Catalog } from '@/sections/Catalog';
@@ -25,7 +25,7 @@ export default function HomePage() {
             <SocialProof />
             <FeaturedProducts />
             <VideoShowcase />
-            <Customization />
+            <GeradorEstampas />
             <Values />
             <Testimonials />
             <Catalog />
