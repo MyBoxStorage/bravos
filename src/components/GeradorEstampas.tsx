@@ -13,7 +13,7 @@ const IMAGES = {
 };
 
 // API Endpoint
-const API_URL = 'https://gerador-de-estampas-direita-orgulhosa-br-483639527716.us-west1.run.app/';
+const API_URL = 'https://gerador.bravosbrasil.com.br';
 
 // WhatsApp número
 const WHATSAPP_NUMBER = '5524992796969';
