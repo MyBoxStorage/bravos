@@ -37,7 +37,7 @@ dotenv.config();
 
 // Production environment validation (fail fast on missing required vars)
 if (process.env.NODE_ENV === 'production') {
-  const required = ['DATABASE_URL', 'MP_ACCESS_TOKEN', 'FRONTEND_URL', 'BACKEND_URL', 'ADMIN_TOKEN', 'JWT_SECRET'];
+  const required = ['DATABASE_URL', 'MP_ACCESS_TOKEN', 'FRONTEND_URL', 'BACKEND_URL', 'ADMIN_TOKEN', 'JWT_SECRET', 'GEMINI_API_KEY'];
   const missing = required.filter((k) => !process.env[k]);
   if (missing.length) {
     throw new Error(`Missing required env vars in production: ${missing.join(', ')}`);

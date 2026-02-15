@@ -12,7 +12,6 @@ export const generateStampSchema = z.object({
       (val) => !val || val.startsWith('data:image/'),
       'Imagem deve ser base64 válida'
     ),
-  generatedImage: z.string().optional(),
 });
 
 export type GenerateStampInput = z.infer<typeof generateStampSchema>;

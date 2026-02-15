@@ -1,12 +1,10 @@
 import { useState } from 'react';
-import { GoogleGenerativeAI, type Part } from '@google/generative-ai';
 import { useAuth } from '../contexts/AuthContext';
 import { AuthModal } from './AuthModal';
 import { apiConfig } from '../config/api';
 import { Sparkles, Download, MessageCircle, Clock } from 'lucide-react';
 
 const API_URL = apiConfig.baseURL;
-const GEMINI_API_KEY = import.meta.env.VITE_GEMINI_API_KEY || '';
 const WHATSAPP_NUMBER = '5524992796969';
 
 const EXEMPLOS = {
@@ -63,70 +61,21 @@ export function GeradorEstampas() {
       return;
     }
 
-    if (!GEMINI_API_KEY) {
-      setError('Chave da API Gemini não configurada. Configure VITE_GEMINI_API_KEY.');
-      return;
-    }
-
     setLoading(true);
     setError('');
     setGeneratedImage('');
 
     try {
-      const base64 = uploadedFile
-        ? await new Promise<string>((resolve) => {
-            const reader = new FileReader();
-            reader.onload = () => resolve((reader.result as string) ?? '');
-            reader.readAsDataURL(uploadedFile);
-          })
-        : undefined;
+      const body: Record<string, unknown> = { prompt };
 
-      // Gerar imagem com Gemini
-      const genAI = new GoogleGenerativeAI(GEMINI_API_KEY);
-      const model = genAI.getGenerativeModel({ model: 'gemini-2.5-flash-image' });
-
-      const parts: Part[] = [
-        {
-          text: `Crie uma arte para estampa de camiseta baseada nesta descrição: ${prompt}
-
-INSTRUÇÕES:
-- Crie uma imagem artística, vibrante e impactante
-- Adequada para impressão em tecido (alta resolução)
-- Estilo: ilustração vetorial, cores vivas
-- Fundo transparente ou branco
-- Formato quadrado ou retangular adequado para camiseta
-- Evite textos muito pequenos
-- Foco no conceito visual da descrição`,
-        },
-      ];
-
-      if (base64) {
-        const base64Data = base64.split(',')[1];
-        const mimeType = base64.match(/data:(.*?);/)?.[1] || 'image/jpeg';
-        parts.push({
-          inlineData: { mimeType, data: base64Data },
+      if (uploadedFile) {
+        const base64 = await new Promise<string>((resolve) => {
+          const reader = new FileReader();
+          reader.onload = () => resolve((reader.result as string) ?? '');
+          reader.readAsDataURL(uploadedFile);
         });
+        body.uploadedImage = base64;
       }
-
-      const result = await model.generateContent(parts as Part[]);
-      const response = result.response;
-
-      const imagePart = response.candidates?.[0]?.content?.parts?.find(
-        (p: { inlineData?: { mimeType?: string } }) => p.inlineData && p.inlineData.mimeType
-      );
-
-      if (!imagePart?.inlineData?.data) {
-        throw new Error('Gemini não retornou imagem');
-      }
-
-      const imageData = imagePart.inlineData;
-      const imagemGeradaPeloGemini = `data:${imageData.mimeType};base64,${imageData.data}`;
-
-      const body = {
-        prompt,
-        uploadedImage: base64,
-        generatedImage: imagemGeradaPeloGemini,
-      };
 
       const res = await fetch(`${API_URL}/api/generate-stamp`, {
         method: 'POST',
