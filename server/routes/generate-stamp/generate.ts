@@ -83,23 +83,31 @@ export async function generateStamp(
         },
       });
 
-      const fullPrompt = `TAREFA: Gerar um design de camiseta de alta resolução (300 DPI) para impressão DTF.
-
-REQUISITOS:
-1. FORMATO: PNG transparente, proporção 3:4.
-2. CONTEÚDO: APENAS o gráfico isolado. PROIBIDO mockups, modelos humanos ou marcas d'água.
-3. ESTÉTICA: Heroico, épico, patriótico. Cores: Verde (#00843D) e Amarelo (#FFCC29). PROIBIDO Vermelho.
+      const fullPrompt = `TAREFA: Criar arte para camiseta (impressão DTF, 300 DPI, PNG transparente, 3:4).
 
 ${uploadedImage ? `
-IMAGEM DE BASE: A imagem enviada é o elemento central. Transforme-a em uma arte de camiseta. Aprimore, não substitua. Preserve as características do sujeito, aplicando efeitos sutis como sobreposições da bandeira, respingos de tinta verde/amarela, iluminação dramática ou texturas de desgaste.
+FOTO BASE:
+- Transforme a pessoa em PERSONAGEM de estampa (estilo ilustração/arte)
+- PRESERVE: formato do rosto, cor de cabelo, estilo de barba/cabelo, tipo de roupa
+- Mantenha a pessoa RECONHECÍVEL (mesmas características faciais)
+- NÃO altere cores naturais da pele (mantenha tons reais)
+- Adicione elementos brasileiros SUTIS ao redor (não sobre a pessoa):
+  * Possível: pequenos detalhes da bandeira ao fundo
+  * Possível: efeitos de luz verde/amarelo discretos
+  * Possível: símbolos nacionais pequenos nas laterais
+- O FOCO é a pessoa, elementos brasileiros são COMPLEMENTO
 ` : `
-ELEMENTO CENTRAL: O design deve ser construído em torno de um poderoso símbolo patriótico brasileiro. Use a ferramenta Google Search se necessário para garantir que brasões e bandeiras estejam atualizados e corretos.
+SEM FOTO:
+- Crie ilustração original relacionada ao tema brasileiro
+- Estilo: arte de camiseta profissional
 `}
 
-FUNDO 100% TRANSPARENTE: O resultado FINAL DEVE ser um PNG com um canal alfa real e ativo.
-PROIBIDO FUNDOS SÓLIDOS: NENHUM fundo branco, cinza ou preto.
+PEDIDO DO USUÁRIO: "${prompt}"
 
-PEDIDO DO USUÁRIO: "${prompt}"`;
+OBRIGATÓRIO:
+- Fundo 100% transparente (canal alfa)
+- Qualidade de impressão profissional
+- Sem mockups, modelos ou marcas d'água`;
 
       const result = await model.generateContent({
         contents: [
