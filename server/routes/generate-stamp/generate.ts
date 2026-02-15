@@ -93,8 +93,7 @@ export async function generateStamp(
                 ? [
                     {
                       inlineData: {
-                        mimeType:
-                          uploadedImage.match(/data:(.*?);/)?.[1] || 'image/jpeg',
+                        mimeType: 'image/jpeg',
                         data: uploadedImage.split(',')[1],
                       },
                     },
@@ -103,10 +102,6 @@ export async function generateStamp(
             ],
           },
         ],
-        generationConfig: {
-          responseModalities: ['image'],
-          imageOutputOptions: { resolution: '1K' },
-        },
       } as Parameters<typeof model.generateContent>[0]);
 
       const response = result.response;
