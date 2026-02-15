@@ -1,0 +1,72 @@
+import type { Request, Response } from 'express';
+import bcrypt from 'bcryptjs';
+import { prisma } from '../../utils/prisma.js';
+import { signupSchema } from './schemas.js';
+import { generateToken } from '../../utils/authMiddleware.js';
+
+/**
+ * POST /api/auth/signup
+ * Criar nova conta de usuário (ganha 5 créditos grátis)
+ */
+export async function signup(req: Request, res: Response): Promise<void> {
+  try {
+    const validation = signupSchema.safeParse(req.body);
+    if (!validation.success) {
+      res.status(400).json({
+        error: 'Dados inválidos',
+        details: validation.error.issues,
+      });
+      return;
+    }
+
+    const { email, password, name, phone } = validation.data;
+
+    const existing = await prisma.user.findUnique({ where: { email } });
+    if (existing) {
+      res.status(409).json({ error: 'Email já cadastrado' });
+      return;
+    }
+
+    const passwordHash = await bcrypt.hash(password, 10);
+
+    const user = await prisma.$transaction(async (tx) => {
+      const newUser = await tx.user.create({
+        data: {
+          email,
+          passwordHash,
+          name: name || null,
+          phone: phone || null,
+          credits: 5,
+        },
+      });
+
+      await tx.creditLog.create({
+        data: {
+          userId: newUser.id,
+          amount: 5,
+          reason: 'SIGNUP',
+        },
+      });
+
+      return newUser;
+    });
+
+    const token = generateToken(user.id, user.email);
+
+    console.log(`✅ New user registered: ${user.email} (${user.id})`);
+
+    res.status(201).json({
+      success: true,
+      token,
+      user: {
+        id: user.id,
+        email: user.email,
+        name: user.name,
+        credits: user.credits,
+      },
+    });
+  } catch (error) {
+    console.error('Signup error:', error);
+    res.status(500).json({ error: 'Erro ao criar conta' });
+  }
+}

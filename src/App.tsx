@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { AuthProvider } from "@/contexts/AuthContext";
 
 // Pages
 import HomePage from "@/pages/HomePage";
@@ -15,16 +16,18 @@ function App() {
   }, []);
 
   return (
-    <BrowserRouter>
-      <Routes>
+    <AuthProvider>
+      <BrowserRouter>
+        <Routes>
         <Route path="/" element={<HomePage />} />
         <Route path="/checkout/success" element={<CheckoutSuccess />} />
         <Route path="/checkout/failure" element={<CheckoutFailure />} />
         <Route path="/checkout/pending" element={<CheckoutPending />} />
         <Route path="/order" element={<OrderTracking />} />
         <Route path="/admin" element={<AdminDashboard />} />
-      </Routes>
-    </BrowserRouter>
+        </Routes>
+      </BrowserRouter>
+    </AuthProvider>
   );
 }
 

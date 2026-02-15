@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
-import { Search, ShoppingCart, Menu, X, Minus, Plus, Trash2 } from 'lucide-react';
+import { Search, ShoppingCart, Menu, X, Minus, Plus, Trash2, User, LogOut } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
+import { useAuth } from '@/contexts/AuthContext';
+import { AuthModal } from '@/components/AuthModal';
 import { Sheet, SheetContent, SheetHeader, SheetTitle, SheetTrigger } from '@/components/ui/sheet';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -19,7 +21,9 @@ export function Header() {
   const [isScrolled, setIsScrolled] = useState(false);
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   const [isCheckoutOpen, setIsCheckoutOpen] = useState(false);
+  const [showAuthModal, setShowAuthModal] = useState(false);
   const { cart, totalItems, isCartOpen, setIsCartOpen, updateQuantity, removeFromCart } = useCart();
+  const { user, logout } = useAuth();
 
   useEffect(() => {
     const handleScroll = () => {
@@ -102,6 +106,32 @@ export function Header() {
 
           {/* Actions */}
           <div className="flex items-center gap-3">
+            {/* Auth */}
+            {user ? (
+              <div className="flex items-center gap-2 sm:gap-4">
+                <span className={`text-sm hidden sm:block ${isScrolled ? 'text-gray-800' : 'text-white'}`}>
+                  Olá, {user.name || user.email.split('@')[0]}
+                  <br />
+                  <span className={`text-xs ${isScrolled ? 'text-green-600' : 'text-green-300'}`}>💳 {user.credits} créditos</span>
+                </span>
+                <button
+                  onClick={logout}
+                  className={`p-2 rounded-full transition-colors ${isScrolled ? 'hover:bg-gray-100 text-gray-800' : 'hover:bg-white/10 text-white'}`}
+                  title="Sair"
+                >
+                  <LogOut size={20} />
+                </button>
+              </div>
+            ) : (
+              <button
+                onClick={() => setShowAuthModal(true)}
+                className={`flex items-center gap-2 p-2 rounded-full transition-colors ${isScrolled ? 'hover:bg-gray-100 text-gray-800' : 'hover:bg-white/10 text-white'}`}
+              >
+                <User size={20} />
+                <span className="hidden sm:inline text-sm font-medium">Entrar</span>
+              </button>
+            )}
+
             {/* Search */}
             <button
               className={`p-2 rounded-full transition-colors ${
@@ -286,6 +316,12 @@ export function Header() {
           </nav>
         )}
       </div>
+
+      <AuthModal
+        isOpen={showAuthModal}
+        onClose={() => setShowAuthModal(false)}
+        defaultMode="login"
+      />
 
       {/* Checkout Dialog com Payment Brick */}
       <CheckoutWithBrick

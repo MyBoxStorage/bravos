@@ -16,6 +16,7 @@ import { healthCheck } from './routes/health.js';
 import { shippingQuote } from './routes/shipping/quote.js';
 import { createOrder } from './routes/checkout/create-order.js';
 import { getOrder } from './routes/orders/get-order.js';
+import { linkOrder } from './routes/orders/link-order.js';
 import { markMontink, validateAdminToken } from './routes/orders/mark-montink.js';
 import { listAdminOrders, exportAdminOrder } from './routes/admin/orders.js';
 import { getOrderAudit } from './routes/admin/audit.js';
@@ -23,13 +24,20 @@ import { monitorStatus } from './routes/internal/monitor.js';
 import { reconcilePending } from './routes/internal/reconcile-pending.js';
 import { cancelAbandoned } from './routes/internal/cancel-abandoned.js';
 import { createRateLimiter } from './utils/rateLimiter.js';
+import { signup } from './routes/auth/signup.js';
+import { login } from './routes/auth/login.js';
+import { me } from './routes/auth/me.js';
+import { requireAuth } from './utils/authMiddleware.js';
+import { generateStamp } from './routes/generate-stamp/generate.js';
+import { listMyGenerations } from './routes/generate-stamp/list.js';
+import { cleanupExpiredGenerations } from './routes/internal/cleanup-expired-generations.js';
 
 // Carrega variáveis de ambiente
 dotenv.config();
 
 // Production environment validation (fail fast on missing required vars)
 if (process.env.NODE_ENV === 'production') {
-  const required = ['DATABASE_URL', 'MP_ACCESS_TOKEN', 'FRONTEND_URL', 'BACKEND_URL', 'ADMIN_TOKEN'];
+  const required = ['DATABASE_URL', 'MP_ACCESS_TOKEN', 'FRONTEND_URL', 'BACKEND_URL', 'ADMIN_TOKEN', 'JWT_SECRET', 'GEMINI_API_KEY'];
   const missing = required.filter((k) => !process.env[k]);
   if (missing.length) {
     throw new Error(`Missing required env vars in production: ${missing.join(', ')}`);
@@ -90,6 +98,11 @@ const rateLimitAdminAudit = createRateLimiter({
   maxRequests: 30,
   windowMs: WINDOW_MS,
 });
+const rateLimitGenerateStamp = createRateLimiter({
+  routeKey: 'POST:/api/generate-stamp',
+  maxRequests: 5,
+  windowMs: 60 * 1000,
+});
 
 // Middlewares
 // CORS: Support multiple origins (production + staging if needed)
@@ -130,6 +143,7 @@ app.post('/api/mp/webhooks', webhookHandler);
 app.post('/api/shipping/quote', shippingQuote);
 app.post('/api/checkout/create-order', createOrder);
 app.get('/api/orders/:externalReference', rateLimitGetOrder, getOrder);
+app.post('/api/orders/link', requireAuth, linkOrder);
 app.post(
   '/api/orders/:externalReference/mark-montink',
   validateAdminToken,
@@ -173,6 +187,22 @@ app.post(
   cancelAbandoned
 );
 
+// Auth routes
+app.post('/api/auth/signup', signup);
+app.post('/api/auth/login', login);
+app.get('/api/auth/me', requireAuth, me);
+
+// Generate stamp (requires auth + credits)
+app.post('/api/generate-stamp', requireAuth, rateLimitGenerateStamp, generateStamp);
+app.get('/api/my-generations', requireAuth, listMyGenerations);
+
+// Internal: Cleanup expired generations (CRON)
+app.post(
+  '/api/internal/cleanup-expired-generations',
+  validateAdminToken,
+  cleanupExpiredGenerations
+);
+
 // Error handling middleware
 app.use((err: Error, req: express.Request, res: express.Response, next: express.NextFunction) => {
   const timestamp = new Date().toISOString();
@@ -197,6 +227,8 @@ app.listen(PORT, '0.0.0.0', () => {
     'FRONTEND_URL',
     'BACKEND_URL',
     'ADMIN_TOKEN',
+    'JWT_SECRET',
+    'GEMINI_API_KEY',
   ] as const;
   const status = envKeys.map((k) => `${k}=${process.env[k] ? 'set' : 'not set'}`).join(', ');
   console.log(`🚀 Server running on port ${PORT}`);
