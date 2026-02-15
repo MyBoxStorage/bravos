@@ -3,6 +3,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai';
 import { generateStampSchema } from './schemas.js';
 import { prisma } from '../../utils/prisma.js';
 import type { AuthRequest } from '../../types/auth.js';
+import { uploadImageToGCS } from '../../utils/storage.js';
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
 
@@ -161,11 +162,20 @@ OBRIGATÓRIO:
       const imageData = imagePart.inlineData;
       const imageBase64 = `data:${imageData.mimeType};base64,${imageData.data}`;
 
+      // Upload para Google Cloud Storage
+      const fileName = `${user.email.replace('@', '_at_')}_${prompt
+        .slice(0, 30)
+        .replace(/[^a-z0-9]/gi, '-')
+        .toLowerCase()}_${Date.now()}.png`;
+
+      const imageUrl = await uploadImageToGCS(imageBase64, fileName);
+
+      // Atualizar geração com URL assinada (não salvar base64)
       await prisma.generation.update({
         where: { id: generation.id },
         data: {
           status: 'COMPLETED',
-          imageUrl: imageBase64,
+          imageUrl, // URL assinada, não base64
         },
       });
 
@@ -192,7 +202,7 @@ OBRIGATÓRIO:
 
       res.json({
         success: true,
-        image: imageBase64,
+        image: imageUrl,
         generationId: generation.id,
         creditsRemaining: updatedUser.credits,
         expiresAt: expiresAt.toISOString(),
