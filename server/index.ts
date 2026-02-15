@@ -20,6 +20,7 @@ import { linkOrder } from './routes/orders/link-order.js';
 import { markMontink, validateAdminToken } from './routes/orders/mark-montink.js';
 import { listAdminOrders, exportAdminOrder } from './routes/admin/orders.js';
 import { getOrderAudit } from './routes/admin/audit.js';
+import { listGenerations } from './routes/admin/list-generations.js';
 import { monitorStatus } from './routes/internal/monitor.js';
 import { reconcilePending } from './routes/internal/reconcile-pending.js';
 import { cancelAbandoned } from './routes/internal/cancel-abandoned.js';
@@ -168,6 +169,7 @@ app.get(
   rateLimitAdminAudit,
   getOrderAudit
 );
+app.get('/api/admin/generations', validateAdminToken, listGenerations);
 app.get(
   '/api/internal/monitor',
   validateAdminToken,
