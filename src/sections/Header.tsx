@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { Link } from 'react-router-dom';
 import { Search, ShoppingCart, Menu, X, Minus, Plus, Trash2, User, LogOut } from 'lucide-react';
 import { useCart } from '@/hooks/useCart';
 import { useAuth } from '@/contexts/AuthContext';
@@ -109,6 +110,12 @@ export function Header() {
             {/* Auth */}
             {user ? (
               <div className="flex items-center gap-2 sm:gap-4">
+                <Link
+                  to="/minhas-estampas"
+                  className={`text-sm hidden sm:block hover:underline ${isScrolled ? 'text-gray-800 hover:text-[#00843D]' : 'text-white hover:text-[#FFCC29]'}`}
+                >
+                  Minhas Estampas
+                </Link>
                 <span className={`text-sm hidden sm:block ${isScrolled ? 'text-gray-800' : 'text-white'}`}>
                   Olá, {user.name || user.email.split('@')[0]}
                   <br />
@@ -297,6 +304,17 @@ export function Header() {
         {isMobileMenuOpen && (
           <nav className="lg:hidden mt-4 pb-4 border-t border-white/20 pt-4">
             <div className="flex flex-col gap-3">
+              {user && (
+                <Link
+                  to="/minhas-estampas"
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`font-body text-sm font-medium tracking-wider py-2 transition-colors ${
+                    isScrolled ? 'text-gray-800' : 'text-white'
+                  }`}
+                >
+                  Minhas Estampas
+                </Link>
+              )}
               {navLinks.map((link) => (
                 <a
                   key={link.name}

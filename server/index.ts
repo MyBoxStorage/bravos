@@ -31,6 +31,7 @@ import { me } from './routes/auth/me.js';
 import { requireAuth } from './utils/authMiddleware.js';
 import { generateStamp } from './routes/generate-stamp/generate.js';
 import { listMyGenerations } from './routes/generate-stamp/list.js';
+import { getMyGenerations } from './routes/user/my-generations.js';
 import { cleanupExpiredGenerations } from './routes/internal/cleanup-expired-generations.js';
 
 // Carrega variáveis de ambiente
@@ -205,6 +206,7 @@ app.get('/api/auth/me', requireAuth, me);
 // Generate stamp (requires auth + credits)
 app.post('/api/generate-stamp', requireAuth, rateLimitGenerateStamp, generateStamp);
 app.get('/api/my-generations', requireAuth, listMyGenerations);
+app.get('/api/user/my-generations', requireAuth, getMyGenerations);
 
 // Internal: Cleanup expired generations (CRON)
 app.post(
