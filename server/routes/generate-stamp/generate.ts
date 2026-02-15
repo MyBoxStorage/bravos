@@ -107,14 +107,20 @@ INSTRUÇÕES:
       console.log('✅ Gemini raw response:', JSON.stringify(result.response, null, 2));
       const response = result.response;
 
-      if (
-        !response.candidates ||
-        !response.candidates[0]?.content?.parts?.[0]?.inlineData
-      ) {
+      if (!response.candidates?.[0]?.content?.parts?.length) {
         throw new Error('Gemini não retornou imagem');
       }
 
-      const imageData = response.candidates[0].content.parts[0].inlineData;
+      // Procurar pela parte que contém a imagem (pode não ser a primeira)
+      const imagePart = response.candidates[0].content.parts.find(
+        (part) => part.inlineData && part.inlineData.mimeType
+      );
+
+      if (!imagePart || !imagePart.inlineData || !imagePart.inlineData.data) {
+        throw new Error('Gemini não retornou dados da imagem');
+      }
+
+      const imageData = imagePart.inlineData;
       const imageBase64 = `data:${imageData.mimeType};base64,${imageData.data}`;
 
       await prisma.generation.update({
