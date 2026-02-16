@@ -175,14 +175,30 @@ export default function AdminDashboard() {
               <Shield className="w-6 h-6 text-slate-800" />
               <span>Painel Admin - Montink Manual</span>
             </CardTitle>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => navigate('/')}
-            >
-              <Home className="w-4 h-4 mr-2" />
-              Voltar
-            </Button>
+            <div className="flex gap-2">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/admin/generations')}
+              >
+                Gerações
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/admin/prompts')}
+              >
+                Gerenciar Prompts
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => navigate('/')}
+              >
+                <Home className="w-4 h-4 mr-2" />
+                Voltar
+              </Button>
+            </div>
           </CardHeader>
           <CardContent className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-end">
