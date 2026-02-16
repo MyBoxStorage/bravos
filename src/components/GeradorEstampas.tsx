@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { AuthModal } from './AuthModal';
 import { apiConfig } from '../config/api';
@@ -276,6 +277,12 @@ export function GeradorEstampas() {
                     <MessageCircle size={18} />
                     Fazer Pedido no WhatsApp
                   </button>
+                  <Link
+                    to="/minhas-estampas"
+                    className="w-full bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+                  >
+                    🎨 Ver Todas Minhas Estampas
+                  </Link>
                 </div>
               </>
             ) : (
