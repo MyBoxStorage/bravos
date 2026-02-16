@@ -86,7 +86,8 @@ export function CartProvider({ children }: { children: ReactNode }) {
     const totalItems = items.reduce((sum, item) => sum + item.quantity, 0);
     const discountRate = calculateDiscount(totalItems);
     const discount = subtotal * discountRate;
-    const shipping = subtotal > 200 ? 0 : 15;
+    const hasTestProducts = items.some((item) => item.product.category === 'TESTES');
+    const shipping = hasTestProducts ? 0 : (subtotal > 200 ? 0 : 15);
     const total = subtotal - discount + shipping;
     
     return {

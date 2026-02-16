@@ -546,11 +546,11 @@ export function CheckoutWithBrick({ isOpen, onClose, onSuccess }: CheckoutWithBr
                   <span>- {formatPrice(calculateCouponDiscount())}</span>
                 </div>
               )}
-              <div className="flex justify-between text-sm">
+              <div className={`flex justify-between text-sm ${cart.items.some((i) => i.product.category === 'TESTES') ? 'text-green-600' : ''}`}>
                 <span>Frete</span>
                 <span>
                   {(orderData?.totals.shippingCost ?? cart.shipping) === 0
-                    ? 'Grátis'
+                    ? (cart.items.some((i) => i.product.category === 'TESTES') ? 'GRÁTIS (Produto de Teste)' : 'Grátis')
                     : formatPrice(orderData?.totals.shippingCost ?? cart.shipping)}
                 </span>
               </div>
@@ -561,12 +561,7 @@ export function CheckoutWithBrick({ isOpen, onClose, onSuccess }: CheckoutWithBr
                     orderData?.totals.total ??
                       Math.max(
                         0,
-                        cart.subtotal -
-                          cart.discount -
-                          calculateCouponDiscount() +
-                          (cart.subtotal - cart.discount - calculateCouponDiscount() > 200
-                            ? 0
-                            : 15)
+                        cart.subtotal - cart.discount - calculateCouponDiscount() + cart.shipping
                       )
                   )}
                 </span>

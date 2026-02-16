@@ -70,7 +70,8 @@ function calculateDiscountRate(itemCount: number): number {
  */
 function calculateOrderTotals(
   items: Array<{ quantity: number; unitPrice: number }>,
-  couponDiscountAmount: number = 0
+  couponDiscountAmount: number = 0,
+  hasTestProducts: boolean = false
 ) {
   // Calcular subtotal
   const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
@@ -92,11 +93,12 @@ function calculateOrderTotals(
     subtotalAfterQuantityDiscount - effectiveCouponDiscount;
   const discountTotal = quantityDiscountTotal + effectiveCouponDiscount;
 
-  // Calcular frete
+  // Calcular frete (grátis para produtos de teste)
   const FREE_SHIPPING_THRESHOLD = 200;
   const STANDARD_SHIPPING_COST = 15;
-  const shippingCost =
-    subtotalAfterDiscount > FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_SHIPPING_COST;
+  const shippingCost = hasTestProducts
+    ? 0
+    : (subtotalAfterDiscount > FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_SHIPPING_COST);
 
   // Calcular total
   const total = subtotalAfterDiscount + shippingCost;
@@ -177,8 +179,16 @@ export async function createOrder(req: Request, res: Response) {
       }
     }
 
+    // Verificar se há produtos de teste (frete grátis)
+    const productIds = [...new Set(items.map((i) => i.productId))];
+    const products = await prisma.product.findMany({
+      where: { id: { in: productIds } },
+      select: { category: true },
+    });
+    const hasTestProducts = products.some((p) => p.category === 'TESTES');
+
     // Calcular totals no backend (source of truth)
-    const totals = calculateOrderTotals(items, couponDiscountAmount);
+    const totals = calculateOrderTotals(items, couponDiscountAmount, hasTestProducts);
 
     // Gerar external reference único
     const externalReference = `order_${randomUUID()}`;

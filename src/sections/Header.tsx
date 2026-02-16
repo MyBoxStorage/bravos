@@ -257,7 +257,11 @@ export function Header() {
                       )}
                       <div className="flex justify-between">
                         <span className="text-gray-600">Frete</span>
-                        <span>{cart.shipping === 0 ? 'Grátis' : formatPrice(cart.shipping)}</span>
+                        <span>
+                          {cart.shipping === 0
+                            ? (cart.items.some((i) => i.product.category === 'TESTES') ? 'Grátis (Teste)' : 'Grátis')
+                            : formatPrice(cart.shipping)}
+                        </span>
                       </div>
                       <Separator />
                       <div className="flex justify-between font-display text-xl text-[#00843D]">
