@@ -29,6 +29,7 @@ import { listCoupons } from './routes/admin/coupons/list.js';
 import { createCoupon } from './routes/admin/coupons/create.js';
 import { updateCoupon } from './routes/admin/coupons/update.js';
 import { deleteCoupon } from './routes/admin/coupons/delete.js';
+import { getAnalyticsOverview } from './routes/admin/analytics/overview.js';
 import { validateCoupon } from './routes/coupons/validate.js';
 import { monitorStatus } from './routes/internal/monitor.js';
 import { reconcilePending } from './routes/internal/reconcile-pending.js';
@@ -196,6 +197,7 @@ app.get('/api/admin/coupons', validateAdminToken, listCoupons);
 app.post('/api/admin/coupons', validateAdminToken, createCoupon);
 app.put('/api/admin/coupons/:id', validateAdminToken, updateCoupon);
 app.delete('/api/admin/coupons/:id', validateAdminToken, deleteCoupon);
+app.get('/api/admin/analytics/overview', validateAdminToken, getAnalyticsOverview);
 app.post('/api/coupons/validate', optionalAuth, validateCoupon);
 app.get(
   '/api/internal/monitor',

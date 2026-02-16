@@ -12,6 +12,7 @@ import AdminDashboard from "@/pages/AdminDashboard";
 import { AdminGenerationsPage } from "@/pages/AdminGenerationsPage";
 import { AdminPromptsPage } from "@/pages/AdminPromptsPage";
 import { AdminCouponsPage } from "@/pages/AdminCouponsPage";
+import { AdminDashboardPage } from "@/pages/AdminDashboardPage";
 import { MinhasEstampasPage } from "@/pages/MinhasEstampasPage";
 
 function App() {
@@ -29,6 +30,7 @@ function App() {
         <Route path="/checkout/pending" element={<CheckoutPending />} />
         <Route path="/order" element={<OrderTracking />} />
         <Route path="/admin" element={<AdminDashboard />} />
+        <Route path="/admin/dashboard" element={<AdminDashboardPage />} />
         <Route path="/admin/generations" element={<AdminGenerationsPage />} />
         <Route path="/admin/prompts" element={<AdminPromptsPage />} />
         <Route path="/admin/coupons" element={<AdminCouponsPage />} />
