@@ -245,6 +245,24 @@ export function GeradorEstampas() {
               {loading ? 'Gerando...' : '✨ GERAR ESTAMPA COM IA'}
             </button>
 
+            {/* Botões fixos - sempre visíveis */}
+            <div className="flex gap-4 mt-4">
+              <Link
+                to="/minhas-estampas"
+                className="flex-1 bg-blue-600 text-white py-3 rounded-lg font-semibold hover:bg-blue-700 transition-colors flex items-center justify-center gap-2"
+              >
+                🎨 Minhas Estampas
+              </Link>
+              <a
+                href="https://wa.me/5524992796969?text=Olá!%20Tenho%20uma%20dúvida%20sobre%20as%20estampas%20personalizadas"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 transition-colors flex items-center justify-center gap-2"
+              >
+                💬 Dúvidas no WhatsApp
+              </a>
+            </div>
+
             {!user && (
               <p className="text-xs text-gray-500 text-center mt-2">
                 Faça login para gerar estampas
