@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../contexts/AuthContext';
 import { AuthModal } from './AuthModal';
+import { ProductSelector } from './ProductSelector';
 import { apiConfig } from '../config/api';
 import { Sparkles, MessageCircle, Clock } from 'lucide-react';
 
@@ -283,6 +284,18 @@ export function GeradorEstampas() {
                   >
                     🎨 Ver Todas Minhas Estampas
                   </Link>
+                </div>
+
+                <div className="mt-6">
+                  <ProductSelector
+                    onAddToCart={(productData) => {
+                      // TODO: Integrar com carrinho existente
+                      console.log('Produto adicionado:', productData);
+                      alert(
+                        `Produto adicionado ao carrinho!\n\n${productData.productName}\nTamanho: ${productData.size}\nCor: ${productData.color}\nQuantidade: ${productData.quantity}\nTotal: R$ ${productData.price.toFixed(2)}`
+                      );
+                    }}
+                  />
                 </div>
               </>
             ) : (
