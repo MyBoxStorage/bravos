@@ -2,6 +2,17 @@ import { useState, useEffect } from 'react';
 import { apiConfig } from '@/config/api';
 import { allProducts, categories } from '@/data/products';
 import type { Product } from '@/types';
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
+import { Button } from '@/components/ui/button';
+import { ShoppingCart } from 'lucide-react';
 
 const CATEGORY_LABELS: Record<string, string> = Object.fromEntries(
   categories.filter((c) => c.id !== 'all').map((c) => [c.id, c.name])
@@ -111,28 +122,31 @@ export function ProductSelector({
       {/* Seletor de Produto */}
       <div className="mb-6">
         <label className="block text-sm font-medium mb-2">Produto</label>
-        <select
+        <Select
           value={selectedProduct?.id || ''}
-          onChange={(e) => {
-            const product = products.find((p) => p.id === e.target.value);
+          onValueChange={(value) => {
+            const product = products.find((p) => p.id === value);
             if (product) handleProductSelect(product);
           }}
-          className="w-full border border-gray-300 rounded-lg px-4 py-3 text-lg"
         >
-          <option value="">Selecione um produto</option>
-          {Object.entries(groupedProducts).map(([category, items]) => (
-            <optgroup
-              key={category}
-              label={CATEGORY_LABELS[category] ?? category}
-            >
-              {items.map((product) => (
-                <option key={product.id} value={product.id}>
-                  {product.name} - R$ {product.price.toFixed(2)}
-                </option>
-              ))}
-            </optgroup>
-          ))}
-        </select>
+          <SelectTrigger className="w-full font-body text-base h-12 rounded-lg border-gray-300 focus:border-[#00843D] focus:ring-[#00843D]/30">
+            <SelectValue placeholder="Selecione um produto" />
+          </SelectTrigger>
+          <SelectContent className="font-body max-h-80">
+            {Object.entries(groupedProducts).map(([category, items]) => (
+              <SelectGroup key={category}>
+                <SelectLabel className="font-display text-[#002776] text-sm tracking-wide">
+                  {CATEGORY_LABELS[category] ?? category}
+                </SelectLabel>
+                {items.map((product) => (
+                  <SelectItem key={product.id} value={product.id}>
+                    {product.name} - R$ {product.price.toFixed(2)}
+                  </SelectItem>
+                ))}
+              </SelectGroup>
+            ))}
+          </SelectContent>
+        </Select>
 
         {/* Mockup do produto selecionado */}
         {selectedProduct && (
@@ -260,12 +274,14 @@ export function ProductSelector({
           </div>
 
           {/* Botão Adicionar */}
-          <button
+          <Button
             onClick={handleAddToCart}
-            className="w-full bg-green-600 text-white py-4 rounded-lg font-bold text-lg hover:bg-green-700 transition-colors"
+            size="lg"
+            className="w-full bg-[#00843D] hover:bg-[#006633] text-white font-display text-lg px-8 py-6 rounded-full transition-all hover:scale-105"
           >
-            🛒 Adicionar ao Carrinho
-          </button>
+            <ShoppingCart className="w-5 h-5" />
+            ADICIONAR AO CARRINHO
+          </Button>
         </>
       )}
     </div>

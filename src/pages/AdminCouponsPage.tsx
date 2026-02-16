@@ -2,6 +2,13 @@ import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { AdminNav } from '@/components/AdminNav';
 import { apiConfig } from '@/config/api';
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select';
 
 interface Coupon {
   id: string;
@@ -235,19 +242,23 @@ export function AdminCouponsPage() {
 
                 <div>
                   <label className="block text-sm font-medium mb-2">Tipo</label>
-                  <select
+                  <Select
                     value={newCoupon.type}
-                    onChange={(e) =>
+                    onValueChange={(value) =>
                       setNewCoupon({
                         ...newCoupon,
-                        type: e.target.value as 'PERCENTAGE' | 'FIXED',
+                        type: value as 'PERCENTAGE' | 'FIXED',
                       })
                     }
-                    className="w-full border border-gray-300 rounded-lg px-4 py-2"
                   >
-                    <option value="PERCENTAGE">Percentual (%)</option>
-                    <option value="FIXED">Valor fixo (R$)</option>
-                  </select>
+                    <SelectTrigger className="w-full font-body h-10 rounded-lg border-gray-300">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent className="font-body">
+                      <SelectItem value="PERCENTAGE">Percentual (%)</SelectItem>
+                      <SelectItem value="FIXED">Valor fixo (R$)</SelectItem>
+                    </SelectContent>
+                  </Select>
                 </div>
 
                 <div>
