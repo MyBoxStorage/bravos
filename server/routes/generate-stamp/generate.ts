@@ -119,14 +119,30 @@ SEM FOTO:
 - Composição equilibrada para impressão
 `}
 
+BANDEIRAS E ELEMENTOS VISUAIS:
+- Se o usuário pedir "bandeira do Brasil E Estados Unidos" ou similar: mostrar AMBAS as bandeiras
+- Se pedir "bandeira do Brasil" apenas: mostrar só bandeira do Brasil
+- Se pedir elementos de múltiplos países: incluir TODOS os elementos pedidos
+
 PEDIDO DO USUÁRIO: "${prompt}"
 
-${prompt.toLowerCase().includes('texto') || prompt.toLowerCase().includes('frase') || prompt.toLowerCase().includes('palavra') ? `
+${
+  prompt.toLowerCase().includes('texto') ||
+  prompt.toLowerCase().includes('frase') ||
+  prompt.toLowerCase().includes('palavra') ||
+  prompt.toLowerCase().includes('escrito') ||
+  prompt.toLowerCase().includes('escrita') ||
+  prompt.toLowerCase().includes('escrever') ||
+  prompt.toLowerCase().includes('letras') ||
+  prompt.toLowerCase().match(/"[^"]+"/) || // Detecta texto entre aspas
+  prompt.toLowerCase().match(/'[^']+'/) // Detecta texto entre aspas simples
+    ? `
 TEXTO SOLICITADO:
 - Texto em dourado 3D com contorno
 - Fonte bold, impactante
 - Posição: embaixo ou conforme pedido
 - Efeito: relevo, sombra, brilho metálico
+- IMPORTANTE: Incluir exatamente o texto que o usuário pediu
 ` : `
 SEM TEXTO: Não adicione textos, palavras ou frases (usuário não pediu).
 `}
