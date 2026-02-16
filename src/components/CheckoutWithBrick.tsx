@@ -249,160 +249,128 @@ export function CheckoutWithBrick({ isOpen, onClose, onSuccess }: CheckoutWithBr
       // ============== LOGS DETALHADOS - DEBUG PIX - INÍCIO ==============
       console.log('🚀 PAYMENT BRICK - handlePaymentSubmit CHAMADO');
       console.log('📦 DATA COMPLETO:', JSON.stringify(data, null, 2));
-      console.log('📦 data.id:', data.id);
-      console.log('📦 data.formData:', data.formData);
-      console.log('📦 data.formData?.id:', data.formData?.id);
-      console.log('📦 data.payment_id:', data.payment_id);
-      console.log('📦 typeof data.id:', typeof data.id);
-      console.log('📦 data.status:', data.status);
-      console.log('📦 data.payment_method_id:', data.payment_method_id);
-      console.log('📦 data.selectedPaymentMethod:', data.selectedPaymentMethod);
       console.log('📦 data.paymentType:', data.paymentType);
-      console.log('📦 data.point_of_interaction:', data.point_of_interaction);
+      console.log('📦 data.selectedPaymentMethod:', data.selectedPaymentMethod);
+      console.log('📦 data.formData:', data.formData);
       // ============== LOGS DETALHADOS - DEBUG PIX - FIM ==============
 
-      if (import.meta.env.DEV) {
-        console.log('🔵 CheckoutWithBrick - Payment processed:', data);
-        console.log('🔵 CheckoutWithBrick - Data structure:', {
-          paymentType: data.paymentType,
-          selectedPaymentMethod: data.selectedPaymentMethod,
-          formData: data.formData,
-          status: data.status,
-          id: data.id,
-          external_reference: data.external_reference,
-        });
+      const paymentMethod = data.formData?.payment_method_id || data.selectedPaymentMethod || 'pix';
+      const isPix = paymentMethod === 'pix' || data.paymentType === 'bank_transfer';
+
+      console.log('💳 Método de pagamento detectado:', paymentMethod);
+      console.log('💳 É PIX?', isPix);
+
+      if (!orderData || !customerData) {
+        toast.error('Erro: dados do pedido não encontrados');
+        return;
       }
 
-      // Extrair informações do pagamento
-      const paymentMethod = data.formData?.payment_method_id || 
-                           data.selectedPaymentMethod || 
-                           data.payment_method_id || 
-                           'unknown';
-      
-      const paymentId = data.id || 
-                       data.formData?.id || 
-                       data.payment_id || 
-                       `BRAVOS-${Date.now()}`;
-      
-      const externalReference = data.external_reference || 
-                               data.formData?.external_reference || 
-                               `BRAVOS-${Date.now()}`;
-      
-      const status = data.status || 
-                    data.formData?.status || 
-                    'pending';
-      
-      const statusDetail = data.status_detail || 
-                          data.formData?.status_detail || 
-                          '';
-
-      if (import.meta.env.DEV) {
-        console.log('🔵 CheckoutWithBrick - Extracted data:', {
-          paymentMethod,
-          paymentId,
-          externalReference,
-          status,
-          statusDetail,
-        });
-      }
-
-      // Determinar para qual página redirecionar
-      let redirectUrl = '';
-      
-      // PIX sempre é pendente (bank_transfer)
-      if (paymentMethod === 'pix' || 
-          data.paymentType === 'bank_transfer' || 
-          data.selectedPaymentMethod === 'bank_transfer') {
-        if (import.meta.env.DEV) console.log('💳 CheckoutWithBrick - PIX detectado, redirecionando para pending');
+      // Se for PIX, criar pagamento no backend
+      if (isPix) {
+        console.log('🔵 Criando pagamento PIX no backend...');
         
-        // Capturar dados do PIX se disponíveis
-        const pixData = data.point_of_interaction?.transaction_data || 
-                       data.formData?.point_of_interaction?.transaction_data ||
-                       null;
-        
-        if (pixData) {
-          // Salvar dados do PIX no localStorage para usar na página pending
-          const pixPaymentData = {
-            qrCode: pixData.qr_code,
-            qrCodeBase64: pixData.qr_code_base64,
-            ticketUrl: pixData.ticket_url,
-            paymentId: paymentId,
-            externalReference: externalReference,
-            timestamp: Date.now(),
-          };
-          
-          localStorage.setItem('pixPaymentData', JSON.stringify(pixPaymentData));
-          if (import.meta.env.DEV) console.log('💾 CheckoutWithBrick - Dados do PIX salvos no localStorage:', pixPaymentData);
-        } else {
-          if (import.meta.env.DEV) {
-            console.warn('⚠️ CheckoutWithBrick - PIX detectado mas dados do QR Code não encontrados');
-            console.log('⚠️ CheckoutWithBrick - Estrutura completa dos dados:', JSON.stringify(data, null, 2));
-          }
-        }
-        
-        redirectUrl = `/checkout/pending?order_id=${externalReference}&payment_id=${paymentId}&external_reference=${externalReference}&payment_type_id=pix`;
-        toast.success('Pagamento PIX processado! Aguardando confirmação.');
-      } 
-      // Cartão aprovado
-      else if (status === 'approved') {
-        if (import.meta.env.DEV) console.log('✅ CheckoutWithBrick - Pagamento aprovado, redirecionando para success');
-        redirectUrl = `/checkout/success?payment_id=${paymentId}&external_reference=${externalReference}`;
-        toast.success('Pagamento aprovado com sucesso!');
-      } 
-      // Cartão recusado
-      else if (status === 'rejected' || status === 'cancelled') {
-        if (import.meta.env.DEV) console.log('❌ CheckoutWithBrick - Pagamento recusado, redirecionando para failure');
-        redirectUrl = `/checkout/failure?payment_id=${paymentId}&status_detail=${statusDetail || 'generic_error'}`;
-        toast.error('Pagamento não foi aprovado.');
-      } 
-      // Outros casos pendentes (boleto, etc)
-      else {
-        if (import.meta.env.DEV) console.log('⏳ CheckoutWithBrick - Pagamento pendente, redirecionando para pending');
-        redirectUrl = `/checkout/pending?order_id=${externalReference}&payment_id=${paymentId}&external_reference=${externalReference}&payment_type_id=${paymentMethod}`;
-        toast.success('Pagamento processado! Aguardando confirmação.');
-      }
-
-      // Limpar carrinho após processar pagamento
-      clearCart();
-      
-      // Limpar dados do pedido pendente do localStorage
-      localStorage.removeItem('bb_order_pending');
-      
-      // Fechar checkout
-      onClose();
-      
-      // Resetar formulário
-      reset();
-      setShowPaymentBrick(false);
-      setCustomerData(null);
-      setOrderData(null);
-
-      // Chamar callback de sucesso se fornecido
-      if (onSuccess && paymentId) {
-        onSuccess(paymentId.toString());
-      }
-
-      // Salvar mpPaymentId no backend para fallback na página pending
-      if (/^\d+$/.test(String(paymentId)) && externalReference && externalReference !== paymentId) {
         try {
-          await fetch(`${apiConfig.baseURL}/api/orders/${encodeURIComponent(externalReference)}/update-payment`, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ paymentId: String(paymentId), status }),
-          });
-        } catch {
-          // Não bloquear redirect se falhar
-        }
-      }
+          const paymentPayload = {
+            items: cart.items.map((item) => ({
+              productId: item.product.id,
+              quantity: item.quantity,
+              unitPrice: item.product.price,
+              size: item.size,
+              color: item.color,
+            })),
+            payer: {
+              name: customerData.name,
+              email: customerData.email,
+              phone: customerData.phone,
+            },
+            amount: orderData.totals.total,
+            paymentMethod: 'pix',
+          };
 
-      // Redirecionar usando window.location.href para garantir recarregamento
-      if (import.meta.env.DEV) console.log('🔵 CheckoutWithBrick - Redirecionando para:', redirectUrl);
-      window.location.href = redirectUrl;
+          console.log('📤 Enviando para /api/mp/create-payment:', paymentPayload);
+
+          const paymentResponse = await fetch(`${apiConfig.baseURL}/api/mp/create-payment`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token && { Authorization: `Bearer ${token}` }),
+            },
+            body: JSON.stringify(paymentPayload),
+          });
+
+          if (!paymentResponse.ok) {
+            const errorData = await paymentResponse.json();
+            console.error('❌ Erro ao criar pagamento:', errorData);
+            toast.error(errorData.message || 'Erro ao criar pagamento PIX');
+            return;
+          }
+
+          const paymentData = await paymentResponse.json();
+          console.log('✅ Pagamento PIX criado:', paymentData);
+
+          // Salvar dados do PIX no localStorage
+          if (paymentData.pix) {
+            const pixPaymentData = {
+              qrCode: paymentData.pix.copyPaste,
+              qrCodeBase64: paymentData.pix.qrCode,
+              paymentId: paymentData.paymentId,
+              externalReference: paymentData.orderId,
+              timestamp: Date.now(),
+            };
+            localStorage.setItem('pixPaymentData', JSON.stringify(pixPaymentData));
+            console.log('💾 Dados PIX salvos no localStorage:', pixPaymentData);
+          }
+
+          // Atualizar order com payment_id
+          if (paymentData.paymentId && orderData.externalReference) {
+            try {
+              await fetch(
+                `${apiConfig.baseURL}/api/orders/${encodeURIComponent(orderData.externalReference)}/update-payment`,
+                {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({
+                    paymentId: String(paymentData.paymentId),
+                    status: paymentData.status,
+                  }),
+                }
+              );
+              console.log('✅ Payment ID salvo no pedido');
+            } catch (err) {
+              console.warn('⚠️ Erro ao atualizar payment_id (não crítico):', err);
+            }
+          }
+
+          // Limpar carrinho e fechar modal
+          clearCart();
+          localStorage.removeItem('bb_order_pending');
+          onClose();
+          reset();
+          setShowPaymentBrick(false);
+          setCustomerData(null);
+          setOrderData(null);
+
+          // Redirecionar para pending com payment_id correto
+          const redirectUrl = `/checkout/pending?order_id=${paymentData.orderId}&payment_id=${paymentData.paymentId}&external_reference=${paymentData.orderId}&payment_type_id=pix`;
+          
+          console.log('🔀 Redirecionando para:', redirectUrl);
+          toast.success('Pagamento PIX processado! Aguardando confirmação.');
+          window.location.href = redirectUrl;
+
+        } catch (error) {
+          console.error('❌ Erro ao processar pagamento PIX:', error);
+          toast.error('Erro ao processar pagamento. Tente novamente.');
+          return;
+        }
+      } else {
+        // Outros métodos de pagamento (cartão, boleto)
+        toast.info('Método de pagamento selecionado: ' + paymentMethod);
+        console.log('⚠️ Método não implementado ainda:', paymentMethod);
+      }
 
     } catch (error) {
-      console.error('❌ CheckoutWithBrick - Erro ao processar pagamento:', error);
-      toast.error('Erro ao processar pagamento. Tente novamente.');
-      handlePaymentError(error);
+      console.error('❌ Erro geral em handlePaymentSubmit:', error);
+      toast.error('Erro ao processar pagamento.');
     }
   };
 
