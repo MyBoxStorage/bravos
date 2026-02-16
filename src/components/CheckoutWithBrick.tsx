@@ -246,6 +246,21 @@ export function CheckoutWithBrick({ isOpen, onClose, onSuccess }: CheckoutWithBr
 
   const handlePaymentSubmit = async (data: any) => {
     try {
+      // ============== LOGS DETALHADOS - DEBUG PIX - INÍCIO ==============
+      console.log('🚀 PAYMENT BRICK - handlePaymentSubmit CHAMADO');
+      console.log('📦 DATA COMPLETO:', JSON.stringify(data, null, 2));
+      console.log('📦 data.id:', data.id);
+      console.log('📦 data.formData:', data.formData);
+      console.log('📦 data.formData?.id:', data.formData?.id);
+      console.log('📦 data.payment_id:', data.payment_id);
+      console.log('📦 typeof data.id:', typeof data.id);
+      console.log('📦 data.status:', data.status);
+      console.log('📦 data.payment_method_id:', data.payment_method_id);
+      console.log('📦 data.selectedPaymentMethod:', data.selectedPaymentMethod);
+      console.log('📦 data.paymentType:', data.paymentType);
+      console.log('📦 data.point_of_interaction:', data.point_of_interaction);
+      // ============== LOGS DETALHADOS - DEBUG PIX - FIM ==============
+
       if (import.meta.env.DEV) {
         console.log('🔵 CheckoutWithBrick - Payment processed:', data);
         console.log('🔵 CheckoutWithBrick - Data structure:', {

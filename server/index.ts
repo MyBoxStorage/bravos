@@ -160,6 +160,9 @@ app.get('/health', healthCheck);
 app.post('/api/mp/create-payment', createPayment);
 app.post('/api/mp/create-preference', createPreference);
 app.get('/api/mp/payment/:paymentId', rateLimitGetPayment, getPayment);
+app.get('/api/mp/webhooks', (_req, res) => {
+  res.status(200).send('Webhook endpoint OK');
+});
 app.post('/api/mp/webhooks', webhookHandler);
 app.post('/api/shipping/quote', shippingQuote);
 app.post('/api/checkout/create-order', createOrder);
