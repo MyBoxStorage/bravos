@@ -35,10 +35,9 @@ type CheckoutFormData = z.infer<typeof checkoutSchema>;
 interface CheckoutWithBrickProps {
   isOpen: boolean;
   onClose: () => void;
-  onSuccess?: (paymentId: string) => void;
 }
 
-export function CheckoutWithBrick({ isOpen, onClose, onSuccess }: CheckoutWithBrickProps) {
+export function CheckoutWithBrick({ isOpen, onClose }: CheckoutWithBrickProps) {
   const { cart, clearCart } = useCart();
   const { token } = useAuth();
   const [showPaymentBrick, setShowPaymentBrick] = useState(false);
