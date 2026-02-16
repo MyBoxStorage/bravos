@@ -6,7 +6,6 @@
  * Suporta ?ref= para preencher número do pedido. PENDING: um auto-refresh após 30s.
  * Em desenvolvimento: ?simulate=PENDING|PAID|... simula um pedido com esse status para QA.
  */
-
 import { useState, useRef, useEffect } from 'react';
 import { useNavigate, useSearchParams, useLocation } from 'react-router-dom';
 import { Search, Package, MapPin, Loader2, AlertCircle, Home, RefreshCw, Copy, Check, HelpCircle, AlertTriangle, MessageCircle } from 'lucide-react';
@@ -106,6 +105,7 @@ export default function OrderTracking() {
   const [searchParams] = useSearchParams();
   const refFromUrl = searchParams.get('ref') ?? searchParams.get('external_reference') ?? '';
   const state = location.state as OrderTrackingState;
+
   const [email, setEmail] = useState('');
   const [externalReference, setExternalReference] = useState(refFromUrl);
   const [order, setOrder] = useState<OrderResponse | null>(null);
@@ -118,7 +118,6 @@ export default function OrderTracking() {
   const pendingAutoRefreshDone = useRef(false);
   const stateAppliedRef = useRef(false);
 
-  // Simulação de status (apenas em dev): ?simulate=PENDING | PAID | FAILED_MONTINK | ...
   useEffect(() => {
     if (!import.meta.env.DEV) return;
     const sim = searchParams.get('simulate');
@@ -134,12 +133,10 @@ export default function OrderTracking() {
     }
   }, [searchParams]);
 
-  // Pre-fill from URL (e.g. after navigation from success/pending)
   useEffect(() => {
     if (refFromUrl && !externalReference) setExternalReference(refFromUrl);
   }, [refFromUrl]);
 
-  // Pre-fill ref and email from navigate state (memory only; no email in URL)
   useEffect(() => {
     if (!state || stateAppliedRef.current) return;
     stateAppliedRef.current = true;
@@ -148,7 +145,6 @@ export default function OrderTracking() {
     if (state.ref && state.email) setSuggestAutoFetch(true);
   }, [state]);
 
-  // Single auto-refresh for PENDING orders, once per page load; cleanup on unmount (skip when simulating)
   useEffect(() => {
     if (!order || order.status !== 'PENDING' || !email || pendingAutoRefreshDone.current || simulatedStatus !== null) return;
     let cancelled = false;
@@ -170,146 +166,113 @@ export default function OrderTracking() {
     };
   }, [order?.orderId, order?.status, order?.externalReference, email]);
 
-  const loadOrder = async (
-    ref: string,
-    userEmail: string
-  ): Promise<OrderResponse> => {
+  const loadOrder = async (ref: string, userEmail: string): Promise<OrderResponse> => {
     return getOrder(ref, userEmail);
   };
 
   function getErrorMessage(err: unknown): string {
-    const status =
-      err && typeof err === 'object' && 'status' in err
-        ? (err as { status: number }).status
-        : undefined;
+    const status = err && typeof err === 'object' && 'status' in err ? (err as { status: number }).status : undefined;
     if (status === 429) return 'Muitas tentativas. Aguarde um minuto e tente novamente.';
-    if (status === 404 || status === 400)
-      return 'Não encontramos um pedido com esses dados. Confira o e-mail e o número do pedido.';
+    if (status === 404 || status === 400) return 'Não encontramos um pedido com esses dados. Confira o e-mail e o número do pedido.';
     return 'Erro ao buscar pedido. Tente novamente.';
   }
 
   const handleSearch = async (e: React.FormEvent) => {
     e.preventDefault();
-
-    if (!email || !externalReference) {
-      toast.error('Preencha email e número do pedido');
-      return;
-    }
-
-    setLoading(true);
-    setError(null);
-    setOrder(null);
-
+    if (!email || !externalReference) { toast.error('Preencha email e número do pedido'); return; }
+    setLoading(true); setError(null); setOrder(null);
     try {
       const orderData = await loadOrder(externalReference, email);
       setOrder(orderData);
       toast.success('Pedido encontrado!');
     } catch (err: unknown) {
       const msg = getErrorMessage(err);
-      setError(msg);
-      toast.error(msg);
-    } finally {
-      setLoading(false);
-    }
+      setError(msg); toast.error(msg);
+    } finally { setLoading(false); }
   };
 
   const handleRefreshStatus = async () => {
     if (!order || !email) return;
-    setRefreshing(true);
-    setError(null);
+    setRefreshing(true); setError(null);
     try {
       const updated = await loadOrder(order.externalReference, email);
-      setOrder(updated);
-      toast.success('Status atualizado');
+      setOrder(updated); toast.success('Status atualizado');
     } catch (err: unknown) {
       const msg = getErrorMessage(err);
-      setError(msg);
-      toast.error(msg);
-    } finally {
-      setRefreshing(false);
-    }
+      setError(msg); toast.error(msg);
+    } finally { setRefreshing(false); }
   };
 
   const handleAutoFetch = async () => {
     if (!externalReference || !email) return;
-    setSuggestAutoFetch(false);
-    setLoading(true);
-    setError(null);
-    setOrder(null);
+    setSuggestAutoFetch(false); setLoading(true); setError(null); setOrder(null);
     try {
       const orderData = await loadOrder(externalReference, email);
-      setOrder(orderData);
-      toast.success('Pedido encontrado!');
+      setOrder(orderData); toast.success('Pedido encontrado!');
     } catch (err: unknown) {
       const msg = getErrorMessage(err);
-      setError(msg);
-      toast.error(msg);
-    } finally {
-      setLoading(false);
-    }
+      setError(msg); toast.error(msg);
+    } finally { setLoading(false); }
   };
 
   const handleCopyRef = async () => {
     if (!order?.externalReference) return;
     try {
       await navigator.clipboard.writeText(order.externalReference);
-      setCopied(true);
-      toast.success('Número do pedido copiado');
+      setCopied(true); toast.success('Número do pedido copiado');
       setTimeout(() => setCopied(false), 1500);
     } catch {
       try {
         const input = document.createElement('input');
         input.value = order.externalReference;
         input.setAttribute('readonly', '');
-        input.style.position = 'absolute';
-        input.style.left = '-9999px';
-        document.body.appendChild(input);
-        input.select();
-        document.execCommand('copy');
-        document.body.removeChild(input);
-        setCopied(true);
-        toast.success('Número do pedido copiado');
+        input.style.position = 'absolute'; input.style.left = '-9999px';
+        document.body.appendChild(input); input.select();
+        document.execCommand('copy'); document.body.removeChild(input);
+        setCopied(true); toast.success('Número do pedido copiado');
         setTimeout(() => setCopied(false), 1500);
-      } catch {
-        toast.error('Não foi possível copiar. Copie o número manualmente.');
-      }
+      } catch { toast.error('Não foi possível copiar. Copie o número manualmente.'); }
     }
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50 p-4">
+    <div className="min-h-screen bg-gradient-to-br from-[#002776]/5 via-[#002776]/3 to-[#00843D]/5 p-4">
       <div className="max-w-2xl mx-auto">
-        <Card className="shadow-xl">
-          <CardHeader>
-            <CardTitle className="text-2xl flex items-center gap-2">
-              <Package className="w-6 h-6" />
+        <Card className="shadow-xl border-0 rounded-xl overflow-hidden">
+          <CardHeader className="pb-4">
+            <CardTitle className="font-display text-2xl sm:text-3xl text-[#002776] flex items-center gap-3 tracking-wide">
+              <div className="w-10 h-10 bg-[#00843D]/10 rounded-lg flex items-center justify-center">
+                <Package className="w-5 h-5 text-[#00843D]" />
+              </div>
               Acompanhar Pedido
             </CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
+            {/* Alerta de Simulação - com cores da marca */}
             {order && simulatedStatus && (
-              <Alert className="border-violet-300 bg-violet-50 [&_[data-slot=alert-description]]:text-violet-900">
-                <AlertCircle className="h-4 w-4 text-violet-600 shrink-0" />
-                <AlertDescription>
-                  Simulação de status: <strong>{simulatedStatus}</strong>. Altere a URL: <code className="text-xs bg-violet-100 px-1 rounded">/order?simulate=PAID</code> etc.
+              <Alert className="border-[#FFCC29]/50 bg-[#FFCC29]/10 rounded-xl">
+                <AlertCircle className="h-5 w-5 text-[#FFCC29] shrink-0" />
+                <AlertDescription className="text-[#002776] font-body ml-2">
+                  Simulação de status: <strong className="font-semibold">{simulatedStatus}</strong>. Altere a URL: <code className="text-xs bg-[#FFCC29]/20 px-1.5 py-0.5 rounded text-[#002776]">/order?simulate=PAID</code> etc.
                 </AlertDescription>
               </Alert>
             )}
+
+            {/* Auto-fetch box - com azul da marca */}
             {suggestAutoFetch && externalReference && email && !simulatedStatus && (
-              <div className="rounded-lg border border-blue-200 bg-blue-50 p-4">
-                <p className="text-sm font-medium text-blue-900 mb-3">
+              <div className="rounded-xl border border-[#002776]/20 bg-[#002776]/5 p-4 sm:p-5">
+                <p className="text-sm font-medium text-[#002776] mb-3 font-body">
                   Detectamos seu pedido. Quer buscar automaticamente?
                 </p>
-                <div className="flex gap-2">
+                <div className="flex gap-3 flex-wrap">
                   <Button
                     type="button"
                     size="sm"
                     onClick={handleAutoFetch}
                     disabled={loading}
+                    className="bg-[#00843D] hover:bg-[#006633] text-white rounded-lg transition-colors"
                   >
-                    {loading ? (
-                      <Loader2 className="w-4 h-4 animate-spin mr-2" />
-                    ) : null}
+                    {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
                     Buscar agora
                   </Button>
                   <Button
@@ -317,6 +280,7 @@ export default function OrderTracking() {
                     variant="outline"
                     size="sm"
                     onClick={() => setSuggestAutoFetch(false)}
+                    className="border-[#002776]/30 text-[#002776] hover:bg-[#002776]/5 rounded-lg transition-colors"
                   >
                     Agora não
                   </Button>
@@ -324,9 +288,10 @@ export default function OrderTracking() {
               </div>
             )}
 
+            {/* Formulário de Busca */}
             <form onSubmit={handleSearch} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="email">Email</Label>
+                <Label htmlFor="email" className="text-[#002776] font-body font-medium">Email</Label>
                 <Input
                   id="email"
                   type="email"
@@ -334,11 +299,11 @@ export default function OrderTracking() {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
+                  className="rounded-lg border-[#002776]/20 focus:border-[#00843D] focus:ring-[#00843D]/20 font-body"
                 />
               </div>
-              
               <div className="space-y-2">
-                <Label htmlFor="externalReference">Número do Pedido</Label>
+                <Label htmlFor="externalReference" className="text-[#002776] font-body font-medium">Número do Pedido</Label>
                 <Input
                   id="externalReference"
                   type="text"
@@ -346,98 +311,84 @@ export default function OrderTracking() {
                   value={externalReference}
                   onChange={(e) => setExternalReference(e.target.value)}
                   required
+                  className="rounded-lg border-[#002776]/20 focus:border-[#00843D] focus:ring-[#00843D]/20 font-body"
                 />
               </div>
-
-              <Button type="submit" className="w-full" size="lg" disabled={loading}>
-                {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Buscando...
-                  </>
-                ) : (
-                  <>
-                    <Search className="w-4 h-4 mr-2" />
-                    Buscar Pedido
-                  </>
-                )}
+              <Button
+                type="submit"
+                className="w-full bg-[#00843D] hover:bg-[#006633] text-white rounded-lg transition-all duration-300 hover:-translate-y-0.5 hover:shadow-lg"
+                size="lg"
+                disabled={loading}
+              >
+                {loading ? (<><Loader2 className="w-4 h-4 mr-2 animate-spin" />Buscando...</>) : (<><Search className="w-4 h-4 mr-2" />Buscar Pedido</>)}
               </Button>
             </form>
 
+            {/* Erro */}
             {error && (
-              <Alert variant="destructive">
+              <Alert variant="destructive" className="rounded-xl">
                 <AlertCircle className="h-4 w-4" />
-                <AlertDescription>{error}</AlertDescription>
+                <AlertDescription className="font-body">{error}</AlertDescription>
               </Alert>
             )}
 
+            {/* Detalhes do Pedido */}
             {order && (
               <div className="space-y-4 mt-6">
-                <div className="bg-gradient-to-r from-blue-50 to-indigo-50 rounded-xl p-6 border border-blue-200">
-                  <div className="flex items-center justify-between mb-4 flex-wrap gap-2">
+                {/* Card Principal do Pedido */}
+                <div className="bg-gradient-to-r from-[#002776]/5 to-[#002776]/3 rounded-xl p-5 sm:p-6 border border-[#002776]/15 hover:shadow-lg transition-shadow duration-300">
+                  <div className="flex items-center justify-between mb-4 flex-wrap gap-3">
                     <div>
-                      <p className="text-sm font-medium text-blue-700 mb-1">Número do Pedido</p>
+                      <p className="text-sm font-medium text-[#002776]/70 mb-1 font-body">Número do Pedido</p>
                       <div className="flex items-center gap-2 flex-wrap">
-                        <p className="text-2xl font-mono font-bold text-blue-900">
-                          #{order.externalReference}
-                        </p>
+                        <p className="text-xl sm:text-2xl font-mono font-bold text-[#002776]">#{order.externalReference}</p>
                         <Button
                           type="button"
                           variant="ghost"
                           size="sm"
-                          className="h-8 px-2 text-blue-700 hover:bg-blue-100"
+                          className="h-8 px-2 text-[#00843D] hover:bg-[#00843D]/10 rounded-lg transition-colors"
                           onClick={handleCopyRef}
                           aria-label="Copiar número do pedido"
                         >
-                          {copied ? (
-                            <Check className="w-4 h-4 mr-1 text-green-600" />
-                          ) : (
-                            <Copy className="w-4 h-4 mr-1" />
-                          )}
+                          {copied ? <Check className="w-4 h-4 mr-1 text-[#00843D]" /> : <Copy className="w-4 h-4 mr-1" />}
                           {copied ? 'Copiado!' : 'Copiar'}
                         </Button>
                       </div>
                     </div>
                     <div className="text-right">
-                      <p className="text-sm font-medium text-blue-700 mb-1">Status</p>
-                      <p className="text-lg font-semibold text-blue-900">
-                        {getOrderStatusLabel(order.status)}
-                      </p>
+                      <p className="text-sm font-medium text-[#002776]/70 mb-1 font-body">Status</p>
+                      <p className="text-lg font-semibold text-[#002776] font-body">{getOrderStatusLabel(order.status)}</p>
                       {getOrderStatusHint(order.status) && (
-                        <p className="text-sm text-blue-600 mt-1">
-                          {getOrderStatusHint(order.status)}
-                        </p>
+                        <p className="text-sm text-[#002776]/60 mt-1 font-body">{getOrderStatusHint(order.status)}</p>
                       )}
                     </div>
                   </div>
 
-                  {/* Timeline: 4 etapas derivadas de order.status */}
-                  <div className="mt-4 pt-4 border-t border-blue-200">
-                    <p className="text-xs font-medium text-blue-700 mb-3">Etapas do pedido</p>
+                  {/* Timeline */}
+                  <div className="mt-4 pt-4 border-t border-[#002776]/10">
+                    <p className="text-xs font-medium text-[#002776]/70 mb-3 font-body">Etapas do pedido</p>
                     <div className="flex flex-col gap-2">
                       {getTimeline(order.status).map((step, idx) => (
                         <div key={idx} className="flex items-center gap-3">
                           <div
                             className={`flex-shrink-0 w-5 h-5 rounded-full border-2 flex items-center justify-center ${
                               step.state === 'done'
-                                ? 'bg-green-500 border-green-500'
+                                ? 'bg-[#00843D] border-[#00843D]'
                                 : step.state === 'current'
-                                  ? 'bg-blue-600 border-blue-600'
-                                  : 'bg-gray-200 border-gray-300'
+                                ? 'bg-[#002776] border-[#002776]'
+                                : 'bg-gray-200 border-gray-300'
                             }`}
                             aria-hidden
                           >
-                            {step.state === 'done' && (
-                              <span className="text-white text-[10px] leading-none">✓</span>
-                            )}
+                            {step.state === 'done' && <Check className="w-3 h-3 text-white" />}
                           </div>
                           <span
-                            className={`text-sm ${
+                            className={`text-sm font-body ${
                               step.state === 'done'
-                                ? 'text-green-700'
+                                ? 'text-[#00843D]'
                                 : step.state === 'current'
-                                  ? 'text-blue-900 font-medium'
-                                  : 'text-gray-500'
+                                ? 'text-[#002776] font-medium'
+                                : 'text-gray-500'
                             }`}
                           >
                             {step.label}
@@ -447,23 +398,25 @@ export default function OrderTracking() {
                     </div>
                   </div>
 
+                  {/* Alerta FAILED_MONTINK - com amarelo da marca */}
                   {order.status === 'FAILED_MONTINK' && (
-                    <Alert className="mt-4 border-2 border-amber-500 bg-amber-50 [&_[data-slot=alert-description]]:text-amber-900">
-                      <AlertTriangle className="h-5 w-5 text-amber-600 shrink-0" />
-                      <AlertDescription>
+                    <Alert className="mt-4 border-2 border-[#FFCC29]/50 bg-[#FFCC29]/10 rounded-xl">
+                      <AlertTriangle className="h-5 w-5 text-[#FFCC29] shrink-0" />
+                      <AlertDescription className="text-[#002776] font-body ml-2">
                         <span className="font-semibold block mb-1">Problema no envio do pedido</span>
                         Nosso time foi notificado. Em breve entraremos em contato ou você pode falar conosco pelo suporte.
                       </AlertDescription>
                     </Alert>
                   )}
 
+                  {/* Seção de Ajuda para CANCELADO/FAILED */}
                   {(order.status === 'CANCELED' || order.status === 'FAILED') && (
-                    <div className="mt-4 rounded-lg border border-gray-300 bg-gray-50 p-4">
-                      <p className="text-sm font-medium text-gray-900 mb-2 flex items-center gap-2">
-                        <MessageCircle className="w-4 h-4 text-gray-600" />
+                    <div className="mt-4 rounded-xl border border-[#002776]/10 bg-[#F8FAFC] p-4">
+                      <p className="text-sm font-semibold text-[#002776] mb-2 flex items-center gap-2 font-body">
+                        <MessageCircle className="w-4 h-4 text-[#002776]" />
                         Precisa de ajuda?
                       </p>
-                      <p className="text-sm text-gray-600 mb-3">
+                      <p className="text-sm text-[#002776]/70 mb-3 font-body">
                         Se seu pedido foi cancelado ou não concluiu, entre em contato com nosso suporte.
                       </p>
                       <Button
@@ -471,6 +424,7 @@ export default function OrderTracking() {
                         variant="outline"
                         size="sm"
                         asChild
+                        className="border-[#00843D] text-[#00843D] hover:bg-[#00843D] hover:text-white rounded-lg transition-colors"
                       >
                         <a href="mailto:suporte@bravosbrasil.com.br" target="_blank" rel="noopener noreferrer">
                           Falar com suporte
@@ -479,59 +433,59 @@ export default function OrderTracking() {
                     </div>
                   )}
 
+                  {/* Botão Atualizar Status */}
                   <Button
                     type="button"
                     variant="outline"
                     size="sm"
-                    className="mt-2"
+                    className="mt-4 border-[#002776]/30 text-[#002776] hover:bg-[#002776]/5 rounded-lg transition-colors"
                     onClick={handleRefreshStatus}
                     disabled={refreshing || simulatedStatus !== null}
                   >
-                    {refreshing ? (
-                      <Loader2 className="w-4 h-4 animate-spin" />
-                    ) : (
-                      <RefreshCw className="w-4 h-4 mr-2" />
-                    )}
+                    {refreshing ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4 mr-2" />}
                     Atualizar status
                   </Button>
                 </div>
 
-                <div className="bg-white rounded-lg border border-gray-200 p-4">
-                  <div className="flex items-center gap-2 mb-3">
-                    <Package className="w-5 h-5 text-gray-600" />
-                    <h3 className="font-semibold text-gray-900">Resumo do Pedido</h3>
+                {/* Resumo do Pedido */}
+                <div className="bg-white rounded-xl border border-[#002776]/10 p-4 sm:p-5 shadow-sm hover:shadow-md transition-shadow duration-300">
+                  <div className="flex items-center gap-2 mb-4">
+                    <div className="w-10 h-10 bg-[#00843D]/10 rounded-lg flex items-center justify-center">
+                      <Package className="w-5 h-5 text-[#00843D]" />
+                    </div>
+                    <h3 className="font-display text-lg text-[#002776] tracking-wide">Resumo do Pedido</h3>
                   </div>
-                  
-                  <div className="space-y-2 text-sm">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Subtotal:</span>
-                      <span className="font-medium">{formatCurrency(order.totals.subtotal)}</span>
+
+                  <div className="space-y-3 text-sm">
+                    <div className="flex justify-between items-center">
+                      <span className="text-[#002776]/60 font-body">Subtotal:</span>
+                      <span className="font-medium text-[#002776] font-body">{formatCurrency(order.totals.subtotal)}</span>
                     </div>
                     {order.totals.discountTotal > 0 && (
-                      <div className="flex justify-between text-green-600">
-                        <span>Desconto:</span>
-                        <span className="font-medium">-{formatCurrency(order.totals.discountTotal)}</span>
+                      <div className="flex justify-between items-center">
+                        <span className="text-[#00843D] font-body">Desconto:</span>
+                        <span className="font-medium text-[#00843D] font-body">-{formatCurrency(order.totals.discountTotal)}</span>
                       </div>
                     )}
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Frete:</span>
-                      <span className="font-medium">{formatCurrency(order.totals.shippingCost)}</span>
+                    <div className="flex justify-between items-center">
+                      <span className="text-[#002776]/60 font-body">Frete:</span>
+                      <span className="font-medium text-[#002776] font-body">{formatCurrency(order.totals.shippingCost)}</span>
                     </div>
-                    <div className="flex justify-between pt-2 border-t border-gray-200">
-                      <span className="font-semibold text-gray-900">Total:</span>
-                      <span className="font-bold text-lg text-gray-900">{formatCurrency(order.totals.total)}</span>
+                    <div className="flex justify-between pt-3 border-t border-[#002776]/10 items-center">
+                      <span className="font-semibold text-[#002776] font-body">Total:</span>
+                      <span className="font-bold text-lg sm:text-xl text-[#00843D] font-body">{formatCurrency(order.totals.total)}</span>
                     </div>
                   </div>
 
                   {order.items.length > 0 && (
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                      <p className="text-xs font-medium text-gray-700 mb-2">Itens ({order.items.length}):</p>
-                      <div className="space-y-1">
+                    <div className="mt-4 pt-4 border-t border-[#002776]/10">
+                      <p className="text-xs font-medium text-[#002776]/70 mb-2 font-body">Itens ({order.items.length}):</p>
+                      <div className="space-y-2">
                         {order.items.map((item, idx) => (
-                          <div key={idx} className="text-xs text-gray-600">
+                          <div key={idx} className="text-xs text-[#002776]/60 font-body">
                             {item.quantity}x {item.name || `Produto ${item.productId.substring(0, 8)}`}
-                            {item.size && ` - Tamanho: ${item.size}`}
-                            {item.color && ` - Cor: ${item.color}`}
+                            {item.size && <span className="text-[#002776]/40"> — Tamanho: {item.size}</span>}
+                            {item.color && <span className="text-[#002776]/40"> — Cor: {item.color}</span>}
                           </div>
                         ))}
                       </div>
@@ -539,11 +493,13 @@ export default function OrderTracking() {
                   )}
 
                   {order.shipping.address1 && (
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                      <div className="flex items-start gap-2">
-                        <MapPin className="w-4 h-4 text-gray-500 mt-0.5" />
-                        <div className="text-xs text-gray-600">
-                          <p className="font-medium">{order.shipping.address1}</p>
+                    <div className="mt-4 pt-4 border-t border-[#002776]/10">
+                      <div className="flex items-start gap-3">
+                        <div className="w-8 h-8 bg-[#002776]/10 rounded-lg flex items-center justify-center flex-shrink-0 mt-0.5">
+                          <MapPin className="w-4 h-4 text-[#002776]" />
+                        </div>
+                        <div className="text-xs text-[#002776]/70 font-body text-left">
+                          <p className="font-medium text-[#002776]">{order.shipping.address1}</p>
                           {order.shipping.number && <p>Nº {order.shipping.number}</p>}
                           {order.shipping.complement && <p>{order.shipping.complement}</p>}
                           {order.shipping.district && <p>{order.shipping.district}</p>}
@@ -557,44 +513,46 @@ export default function OrderTracking() {
                   )}
 
                   {order.montinkOrderId && (
-                    <div className="mt-4 pt-4 border-t border-gray-200">
-                      <p className="text-xs font-medium text-gray-700 mb-1">Código de envio</p>
-                      <p className="text-xs font-mono text-gray-600">{order.montinkOrderId}</p>
+                    <div className="mt-4 pt-4 border-t border-[#002776]/10">
+                      <p className="text-xs font-medium text-[#002776]/70 mb-1 font-body">Código de envio</p>
+                      <p className="text-xs font-mono text-[#002776]/60">{order.montinkOrderId}</p>
                     </div>
                   )}
                 </div>
               </div>
             )}
 
-            <div className="rounded-lg border border-gray-200 bg-gray-50 p-4">
-              <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2 mb-3">
-                <HelpCircle className="w-4 h-4 text-gray-600" />
+            {/* Ajuda Rápida */}
+            <div className="rounded-xl border border-[#002776]/10 bg-[#F8FAFC] p-4 sm:p-5">
+              <h3 className="text-sm font-semibold text-[#002776] flex items-center gap-2 mb-3 font-body">
+                <HelpCircle className="w-4 h-4 text-[#002776]" />
                 Ajuda rápida
               </h3>
-              <ul className="space-y-2 text-sm text-gray-700">
+              <ul className="space-y-3 text-sm">
                 <li>
-                  <span className="font-medium">Onde encontro o número do pedido?</span>
-                  <span className="block text-gray-600">No e-mail de confirmação e na tela de pagamento.</span>
+                  <span className="font-medium text-[#002776] font-body">Onde encontro o número do pedido?</span>
+                  <span className="block text-[#002776]/60 font-body">No e-mail de confirmação e na tela de pagamento.</span>
                 </li>
                 <li>
-                  <span className="font-medium">Meu pagamento está pendente.</span>
-                  <span className="block text-gray-600">Pode levar alguns minutos para atualizar após o pagamento.</span>
+                  <span className="font-medium text-[#002776] font-body">Meu pagamento está pendente.</span>
+                  <span className="block text-[#002776]/60 font-body">Pode levar alguns minutos para atualizar após o pagamento.</span>
                 </li>
                 <li>
-                  <span className="font-medium">O e-mail precisa ser o mesmo da compra?</span>
-                  <span className="block text-gray-600">Sim, por segurança.</span>
+                  <span className="font-medium text-[#002776] font-body">O e-mail precisa ser o mesmo da compra?</span>
+                  <span className="block text-[#002776]/60 font-body">Sim, por segurança.</span>
                 </li>
                 <li>
-                  <span className="font-medium">Atualização do status</span>
-                  <span className="block text-gray-600">Use &quot;Atualizar status&quot; se acabou de pagar.</span>
+                  <span className="font-medium text-[#002776] font-body">Atualização do status</span>
+                  <span className="block text-[#002776]/60 font-body">Use "Atualizar status" se acabou de pagar.</span>
                 </li>
               </ul>
             </div>
 
-            <div className="pt-4 border-t">
+            {/* Botão Voltar */}
+            <div className="pt-4 border-t border-[#002776]/10">
               <Button
                 variant="outline"
-                className="w-full"
+                className="w-full border-2 border-[#00843D] text-[#00843D] hover:bg-[#00843D] hover:text-white rounded-lg transition-all duration-300"
                 onClick={() => navigate('/')}
               >
                 <Home className="w-4 h-4 mr-2" />

@@ -245,26 +245,112 @@ export function CheckoutWithBrick({ isOpen, onClose }: CheckoutWithBrickProps) {
 
   const handlePaymentSubmit = async (data: any) => {
     try {
-      // ============== LOGS DETALHADOS - DEBUG PIX - INÍCIO ==============
       console.log('🚀 PAYMENT BRICK - handlePaymentSubmit CHAMADO');
       console.log('📦 DATA COMPLETO:', JSON.stringify(data, null, 2));
-      console.log('📦 data.paymentType:', data.paymentType);
-      console.log('📦 data.selectedPaymentMethod:', data.selectedPaymentMethod);
-      console.log('📦 data.formData:', data.formData);
-      // ============== LOGS DETALHADOS - DEBUG PIX - FIM ==============
 
-      const paymentMethod = data.formData?.payment_method_id || data.selectedPaymentMethod || 'pix';
-      const isPix = paymentMethod === 'pix' || data.paymentType === 'bank_transfer';
+      const paymentType = data.paymentType;
+      const paymentMethodId = data.formData?.payment_method_id || data.selectedPaymentMethod || '';
 
-      console.log('💳 Método de pagamento detectado:', paymentMethod);
-      console.log('💳 É PIX?', isPix);
+      const isCreditCard = paymentType === 'credit_card';
+      const isDebitCard = paymentType === 'debit_card';
+      const isCard = isCreditCard || isDebitCard;
+      const isPix = paymentType === 'bank_transfer' || paymentMethodId === 'pix';
+
+      console.table({
+        'Payment Type': paymentType,
+        'Payment Method': paymentMethodId,
+        'É Crédito': isCreditCard,
+        'É Débito': isDebitCard,
+        'É PIX': isPix,
+      });
 
       if (!orderData || !customerData) {
         toast.error('Erro: dados do pedido não encontrados');
         return;
       }
 
-      // Se for PIX, criar pagamento no backend
+      // ============================================
+      // CARTÃO DE CRÉDITO / DÉBITO
+      // ============================================
+      if (isCard) {
+        const cardType = isCreditCard ? 'CRÉDITO' : 'DÉBITO';
+        console.log(`💳 Processando CARTÃO DE ${cardType}`);
+
+        try {
+          const cardPaymentPayload = {
+            token: data.formData.token,
+            payment_method_id: data.formData.payment_method_id,
+            issuer_id: data.formData.issuer_id,
+            installments: isDebitCard ? 1 : (data.formData.installments || 1),
+            transaction_amount: orderData.totals.total,
+            payer: {
+              email: data.formData.payer?.email || customerData.email,
+              ...(data.formData.payer?.identification && {
+                identification: {
+                  type: data.formData.payer.identification.type,
+                  number: data.formData.payer.identification.number,
+                },
+              }),
+            },
+            external_reference: orderData.externalReference,
+          };
+
+          console.log('📤 Enviando para /api/mp/process-card-payment:', cardPaymentPayload);
+
+          const paymentResponse = await fetch(`${apiConfig.baseURL}/api/mp/process-card-payment`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              ...(token && { Authorization: `Bearer ${token}` }),
+            },
+            body: JSON.stringify(cardPaymentPayload),
+          });
+
+          const result = await paymentResponse.json();
+          console.log('📦 Resposta do backend:', result);
+
+          if (!paymentResponse.ok) {
+            console.error(`❌ Erro ao processar cartão (${cardType}):`, result);
+            const userMessage = getCardErrorMessage(result.status_detail || result.status);
+            toast.error(userMessage);
+            return;
+          }
+
+          // Limpar carrinho e fechar modal
+          clearCart();
+          localStorage.removeItem('bb_order_pending');
+          onClose();
+          reset();
+          setShowPaymentBrick(false);
+          setCustomerData(null);
+          setOrderData(null);
+
+          // Redirecionar baseado no status
+          if (result.is_approved) {
+            console.log(`✅ Pagamento ${cardType} aprovado:`, result.payment_id);
+            toast.success('Pagamento aprovado!');
+            window.location.href = `/checkout/success?payment_id=${result.payment_id}&external_reference=${result.external_reference}&status=approved`;
+          } else if (result.is_pending) {
+            console.log(`⏳ Pagamento ${cardType} pendente:`, result.payment_id);
+            toast.info('Pagamento em processamento...');
+            window.location.href = `/checkout/pending?payment_id=${result.payment_id}&external_reference=${result.external_reference}&payment_type_id=${paymentMethodId}`;
+          } else {
+            console.error(`❌ Pagamento ${cardType} rejeitado:`, result);
+            const userMessage = getCardErrorMessage(result.status_detail);
+            toast.error(userMessage);
+          }
+
+        } catch (error) {
+          console.error(`❌ Erro ao processar cartão:`, error);
+          toast.error('Erro ao processar pagamento com cartão. Tente novamente.');
+        }
+
+        return;
+      }
+
+      // ============================================
+      // PIX
+      // ============================================
       if (isPix) {
         console.log('🔵 Criando pagamento PIX no backend...');
         
@@ -361,16 +447,47 @@ export function CheckoutWithBrick({ isOpen, onClose }: CheckoutWithBrickProps) {
           toast.error('Erro ao processar pagamento. Tente novamente.');
           return;
         }
-      } else {
-        // Outros métodos de pagamento (cartão, boleto)
-        toast.info('Método de pagamento selecionado: ' + paymentMethod);
-        console.log('⚠️ Método não implementado ainda:', paymentMethod);
+
+        return;
       }
+
+      // ============================================
+      // MÉTODO NÃO SUPORTADO
+      // ============================================
+      console.error('⚠️ Método de pagamento não suportado:', paymentType, paymentMethodId);
+      toast.error('Método de pagamento não suportado. Use cartão ou PIX.');
 
     } catch (error) {
       console.error('❌ Erro geral em handlePaymentSubmit:', error);
       toast.error('Erro ao processar pagamento.');
     }
+  };
+
+  /**
+   * Traduz status_detail do Mercado Pago em mensagem amigável para o usuário
+   */
+  const getCardErrorMessage = (statusDetail?: string): string => {
+    const messages: Record<string, string> = {
+      cc_rejected_bad_filled_card_number: 'Número do cartão incorreto. Verifique e tente novamente.',
+      cc_rejected_bad_filled_date: 'Data de validade incorreta. Verifique e tente novamente.',
+      cc_rejected_bad_filled_other: 'Dados do cartão incorretos. Verifique e tente novamente.',
+      cc_rejected_bad_filled_security_code: 'Código de segurança incorreto. Verifique e tente novamente.',
+      cc_rejected_blacklist: 'Pagamento não autorizado. Entre em contato com seu banco.',
+      cc_rejected_call_for_authorize: 'Pagamento requer autorização. Ligue para o seu banco e autorize.',
+      cc_rejected_card_disabled: 'Cartão desabilitado. Entre em contato com seu banco para ativar.',
+      cc_rejected_card_error: 'Erro no cartão. Tente com outro cartão.',
+      cc_rejected_duplicated_payment: 'Pagamento duplicado. Aguarde ou tente com outro cartão.',
+      cc_rejected_high_risk: 'Pagamento recusado por segurança. Tente com outro cartão.',
+      cc_rejected_insufficient_amount: 'Saldo insuficiente. Tente com outro cartão ou método de pagamento.',
+      cc_rejected_invalid_installments: 'Número de parcelas inválido para este cartão.',
+      cc_rejected_max_attempts: 'Limite de tentativas excedido. Tente com outro cartão.',
+      cc_rejected_other_reason: 'Pagamento não aprovado. Tente com outro cartão.',
+      rejected: 'Pagamento não aprovado. Tente outro método de pagamento.',
+      pending: 'Pagamento em processamento. Aguarde a confirmação.',
+      in_process: 'Pagamento em análise. Aguarde a confirmação.',
+    };
+
+    return messages[statusDetail || ''] || 'Pagamento não aprovado. Verifique os dados e tente novamente.';
   };
 
   const handlePaymentError = (error: any) => {

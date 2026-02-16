@@ -2,7 +2,7 @@
  * Express Server - BRAVOS BRASIL Backend
  * 
  * Integração com Mercado Pago Payments API
- * Suporte a PIX e Boleto
+ * Suporte a PIX, Boleto, Cartão de Crédito e Débito
  */
 
 import express from 'express';
@@ -12,6 +12,7 @@ import { createPayment } from './routes/mp/create-payment.js';
 import { createPreference } from './routes/mp/create-preference.js';
 import { webhookHandler } from './routes/mp/webhooks.js';
 import { getPayment } from './routes/mp/get-payment.js';
+import { processCardPayment } from './routes/mp/process-card-payment.js';
 import { healthCheck } from './routes/health.js';
 import { shippingQuote } from './routes/shipping/quote.js';
 import { createOrder } from './routes/checkout/create-order.js';
@@ -158,6 +159,7 @@ app.use((req, res, next) => {
 // Routes
 app.get('/health', healthCheck);
 app.post('/api/mp/create-payment', createPayment);
+app.post('/api/mp/process-card-payment', processCardPayment);
 app.post('/api/mp/create-preference', createPreference);
 app.get('/api/mp/payment/:paymentId', rateLimitGetPayment, getPayment);
 app.get('/api/mp/webhooks', (_req, res) => {
