@@ -25,6 +25,11 @@ import { listPromptTemplates } from './routes/admin/prompt-templates/list.js';
 import { createPromptTemplate } from './routes/admin/prompt-templates/create.js';
 import { updatePromptTemplate } from './routes/admin/prompt-templates/update.js';
 import { activatePromptTemplate } from './routes/admin/prompt-templates/activate.js';
+import { listCoupons } from './routes/admin/coupons/list.js';
+import { createCoupon } from './routes/admin/coupons/create.js';
+import { updateCoupon } from './routes/admin/coupons/update.js';
+import { deleteCoupon } from './routes/admin/coupons/delete.js';
+import { validateCoupon } from './routes/coupons/validate.js';
 import { monitorStatus } from './routes/internal/monitor.js';
 import { reconcilePending } from './routes/internal/reconcile-pending.js';
 import { cancelAbandoned } from './routes/internal/cancel-abandoned.js';
@@ -32,7 +37,7 @@ import { createRateLimiter } from './utils/rateLimiter.js';
 import { signup } from './routes/auth/signup.js';
 import { login } from './routes/auth/login.js';
 import { me } from './routes/auth/me.js';
-import { requireAuth } from './utils/authMiddleware.js';
+import { requireAuth, optionalAuth } from './utils/authMiddleware.js';
 import { generateStamp } from './routes/generate-stamp/generate.js';
 import { listMyGenerations } from './routes/generate-stamp/list.js';
 import { getMyGenerations } from './routes/user/my-generations.js';
@@ -187,6 +192,11 @@ app.get('/api/admin/prompt-templates', validateAdminToken, listPromptTemplates);
 app.post('/api/admin/prompt-templates', validateAdminToken, createPromptTemplate);
 app.put('/api/admin/prompt-templates/:id', validateAdminToken, updatePromptTemplate);
 app.post('/api/admin/prompt-templates/:id/activate', validateAdminToken, activatePromptTemplate);
+app.get('/api/admin/coupons', validateAdminToken, listCoupons);
+app.post('/api/admin/coupons', validateAdminToken, createCoupon);
+app.put('/api/admin/coupons/:id', validateAdminToken, updateCoupon);
+app.delete('/api/admin/coupons/:id', validateAdminToken, deleteCoupon);
+app.post('/api/coupons/validate', optionalAuth, validateCoupon);
 app.get(
   '/api/internal/monitor',
   validateAdminToken,

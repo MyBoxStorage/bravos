@@ -167,6 +167,7 @@ model User {
   generations     Generation[]
   creditLogs      CreditLog[]
   purchasedOrders Order[]      @relation("UserPurchases")
+  couponUsages    CouponUsage[]
 
   @@index([email])
   @@map("users")
@@ -237,4 +238,44 @@ model PromptTemplate {
 
   @@index([isActive])
   @@map("prompt_templates")
+}
+
+enum CouponType {
+  PERCENTAGE
+  FIXED
+}
+
+model Coupon {
+  id        String     @id @default(cuid())
+  code      String     @unique
+  type      CouponType @default(PERCENTAGE)
+  value     Float // Percentual (ex: 10 = 10%) ou valor fixo (ex: 5.00)
+  maxUses   Int?       @map("max_uses") // Null = ilimitado
+  usedCount Int        @default(0) @map("used_count")
+  isActive  Boolean    @default(true) @map("is_active")
+  expiresAt DateTime?  @map("expires_at")
+  createdAt DateTime   @default(now()) @map("created_at")
+  updatedAt DateTime   @updatedAt @map("updated_at")
+
+  usages CouponUsage[]
+
+  @@index([code])
+  @@index([isActive])
+  @@map("coupons")
+}
+
+model CouponUsage {
+  id             String   @id @default(cuid())
+  couponId       String   @map("coupon_id")
+  userId         String   @map("user_id")
+  orderId        String?  @map("order_id")
+  discountAmount Float    @map("discount_amount")
+  createdAt      DateTime @default(now()) @map("created_at")
+
+  coupon Coupon @relation(fields: [couponId], references: [id])
+  user   User   @relation(fields: [userId], references: [id])
+
+  @@index([couponId])
+  @@index([userId])
+  @@map("coupon_usages")
 }

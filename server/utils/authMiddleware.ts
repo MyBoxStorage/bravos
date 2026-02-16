@@ -61,6 +61,44 @@ export async function requireAuth(
 }
 
 /**
+ * Middleware: Autenticação opcional
+ * Se houver token válido, preenche req.user; caso contrário, segue sem erro
+ */
+export async function optionalAuth(
+  req: AuthRequest,
+  res: Response,
+  next: NextFunction
+): Promise<void> {
+  try {
+    const authHeader = req.headers.authorization;
+    if (!authHeader || !authHeader.startsWith('Bearer ')) {
+      next();
+      return;
+    }
+
+    const token = authHeader.replace('Bearer ', '');
+    let decoded: JWTPayload;
+    try {
+      decoded = jwt.verify(token, JWT_SECRET) as JWTPayload;
+    } catch {
+      next();
+      return;
+    }
+
+    const user = await prisma.user.findUnique({
+      where: { id: decoded.userId },
+      select: { id: true, email: true, credits: true, name: true },
+    });
+
+    if (user) req.user = user;
+    next();
+  } catch (error) {
+    console.error('Optional auth error:', error);
+    next();
+  }
+}
+
+/**
  * Gera token JWT para um usuário
  */
 export function generateToken(userId: string, email: string): string {
