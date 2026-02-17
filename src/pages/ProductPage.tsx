@@ -181,8 +181,16 @@ function ProductLoader({ slug }: { slug: string }) {
   // Pick the best image based on gender preference
   const imageUrl = useMemo(() => {
     if (!product) return null;
+
+    // 1. Se tem cor selecionada, tenta usar a foto específica daquela cor no colorStock
+    if (selectedColor && Array.isArray(product.colorStock) && product.colorStock.length > 0) {
+      const colorItem = product.colorStock.find((cs) => cs.id === selectedColor);
+      if (colorItem?.image) return colorItem.image;
+    }
+
+    // 2. Fallback: foto de modelo pelo gênero (comportamento original)
     return pickModelImage(product, uiGender);
-  }, [product, uiGender]);
+  }, [product, uiGender, selectedColor]);
 
   // Handle color change — resets size (same as ProductDialog pattern)
   const handleColorChange = (val: string) => {
@@ -356,7 +364,8 @@ function ProductLoader({ slug }: { slug: string }) {
               <img
                 src={imageUrl ?? undefined}
                 alt={product.name}
-                className="w-full h-[520px] object-cover"
+                className="w-full object-contain"
+                style={{ aspectRatio: '3/4', maxHeight: '600px' }}
               />
 
               {/* Badges */}
