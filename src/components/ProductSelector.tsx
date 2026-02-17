@@ -158,7 +158,7 @@ export function ProductSelector({
         {selectedProduct && (
           <div className="mt-2 p-4 bg-gray-50 rounded-lg">
             <img
-              src={selectedProduct.image}
+              src={selectedProduct.image ?? undefined}
               alt={selectedProduct.name}
               className="w-full max-w-xs mx-auto rounded-lg object-contain"
             />

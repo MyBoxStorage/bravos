@@ -214,7 +214,7 @@ export function Header() {
                           className="flex gap-4 p-3 bg-gray-50 rounded-lg"
                         >
                           <img
-                            src={item.product.image}
+                            src={item.product.image ?? undefined}
                             alt={item.product.name}
                             className="w-20 h-20 object-cover rounded-md"
                           />

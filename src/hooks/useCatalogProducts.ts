@@ -86,6 +86,21 @@ function isCacheValid(cache: CatalogCacheEntry): boolean {
   return Date.now() - cache.savedAt < CACHE_TTL_MS;
 }
 
+export function invalidateCatalogCache(): void {
+  try {
+    const keysToRemove: string[] = [];
+    for (let i = 0; i < sessionStorage.length; i++) {
+      const key = sessionStorage.key(i);
+      if (key && key.startsWith(CACHE_PREFIX)) {
+        keysToRemove.push(key);
+      }
+    }
+    keysToRemove.forEach((key) => sessionStorage.removeItem(key));
+  } catch {
+    // silently ignore
+  }
+}
+
 // One-time cleanup of legacy cache key from previous implementation
 try { sessionStorage.removeItem('bb_catalog_cache_v1'); } catch { /* noop */ }
 

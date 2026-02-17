@@ -354,7 +354,7 @@ function ProductCard({
         onMouseEnter={handleToggleGender}
       >
         <img
-          src={currentImageUrl}
+          src={currentImageUrl ?? undefined}
           alt={product.name}
           loading="lazy"
           className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
@@ -463,7 +463,7 @@ function ProductCard({
               className="w-72 p-0 overflow-hidden"
             >
               <img
-                src={currentImageUrl}
+                src={currentImageUrl ?? undefined}
                 alt={product.name}
                 loading="lazy"
                 className="w-full h-40 object-cover"

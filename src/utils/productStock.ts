@@ -6,7 +6,7 @@
  * and `product.colors`.
  */
 
-import type { Product, Gender, ColorStockItem } from '@/types';
+import type { Product, Gender } from '@/types';
 
 // ── Well-known size order (for consistent rendering) ────────────────────────
 

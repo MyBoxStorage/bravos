@@ -218,7 +218,7 @@ export function buildProductPayload(
 export function collectFilesToUpload(
   images: DraftImageInput[],
   colorStock: ColorStockInput[],
-  productSlug: string,
+  _productSlug: string,
 ): Array<{ id: string; file: File; kind: string }> {
   const files: Array<{ id: string; file: File; kind: string }> = [];
 

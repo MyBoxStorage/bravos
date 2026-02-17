@@ -61,7 +61,7 @@ function ProductDialog({ product, isOpen, onClose }: ProductDialogProps) {
         
         <div className="grid md:grid-cols-2 gap-6">
           <img
-            src={product.image}
+            src={product.image ?? undefined}
             alt={product.name}
             className="w-full h-80 object-cover rounded-lg"
           />
@@ -376,7 +376,7 @@ export function Catalog() {
                   {/* Image */}
                   <div className="relative aspect-[3/4] overflow-hidden bg-gray-100">
                     <img
-                      src={product.image}
+                      src={product.image ?? undefined}
                       alt={product.name}
                       className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                     />

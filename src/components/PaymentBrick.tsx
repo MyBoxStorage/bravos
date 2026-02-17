@@ -92,9 +92,9 @@ export function PaymentBrick({
         id: item.product.id,
         title: `${item.product.name} - ${item.size} - ${item.color}`,
         description: item.product.description,
-        picture_url: item.product.image.startsWith('/')
+        picture_url: (item.product.image ?? '').startsWith('/')
           ? `${window.location.origin}${item.product.image}`
-          : item.product.image,
+          : (item.product.image ?? ''),
         category_id: item.product.category,
         quantity: item.quantity,
         unit_price: item.product.price,

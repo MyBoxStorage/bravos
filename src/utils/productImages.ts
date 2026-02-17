@@ -4,7 +4,7 @@
  */
 
 import type { Product, ProductImage, ColorStockItem } from '@/types';
-import type { OrderItem as TrackingOrderItem, OrderItemProduct } from '@/types/order';
+import type { OrderItemProduct } from '@/types/order';
 
 /**
  * Pick the best model image URL for a given gender preference.

@@ -11,7 +11,7 @@ import type { Request, Response } from 'express';
 
 /** Default Cache-Control for public catalog endpoints. */
 const DEFAULT_CACHE_CONTROL =
-  'public, max-age=60, s-maxage=300, stale-while-revalidate=600';
+  'public, max-age=0, s-maxage=0, must-revalidate';
 
 /**
  * Compute a weak ETag from a JSON-serialisable payload.
