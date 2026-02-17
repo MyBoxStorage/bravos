@@ -51,49 +51,21 @@ export function AdminUnifiedPage() {
   );
   const [activeTab, setActiveTab] = useState<TabId>(initialTab);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const { isAuthenticated, isLoading, error, login, logout } = useAdminAuth();
+  const { isAuthenticated, error, login, logout } = useAdminAuth();
 
   const switchTab = (tab: TabId) => {
     setActiveTab(tab);
     navigate(`/admin?tab=${tab}`, { replace: true });
   };
 
-  if (activeTab === 'products') {
-    if (isLoading) {
-      return (
-        <div
-          style={{
-            minHeight: '100vh',
-            background: '#0a0a0a',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <div
-            style={{
-              width: 36,
-              height: 36,
-              border: '3px solid #00843D',
-              borderTopColor: 'transparent',
-              borderRadius: '50%',
-              animation: 'spin 0.8s linear infinite',
-            }}
-          />
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        </div>
-      );
-    }
-    if (!isAuthenticated) {
-      return (
-        <AdminLogin
-          onLogin={login}
-          isLoading={isLoading}
-          error={error}
-          onBack={() => switchTab('orders')}
-        />
-      );
-    }
+  if (activeTab === 'products' && !isAuthenticated) {
+    return (
+      <AdminLogin
+        onLogin={login}
+        error={error}
+        onBack={() => switchTab('orders')}
+      />
+    );
   }
 
   return (

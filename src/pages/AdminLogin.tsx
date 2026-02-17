@@ -1,32 +1,24 @@
 import { useState } from 'react';
-import { Lock, Eye, EyeOff, Mail, Loader2 } from 'lucide-react';
+import { Lock, Eye, EyeOff } from 'lucide-react';
 
 interface AdminLoginProps {
-  onLogin: (email: string, password: string) => Promise<boolean>;
-  isLoading: boolean;
+  onLogin: (password: string) => boolean;
   error: string | null;
   onBack?: () => void;
 }
 
-export function AdminLogin({ onLogin, isLoading, error: externalError, onBack }: AdminLoginProps) {
-  const [email, setEmail] = useState('');
+export function AdminLogin({ onLogin, error, onBack }: AdminLoginProps) {
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [localError, setLocalError] = useState('');
   const [isShaking, setIsShaking] = useState(false);
 
-  const displayError = externalError || localError;
-
-  const handleSubmit = async () => {
-    if (!email || !password) {
-      setLocalError('Preencha email e senha.');
-      return;
-    }
-    setLocalError('');
-    const success = await onLogin(email, password);
+  const handleSubmit = () => {
+    if (!password.trim()) return;
+    const success = onLogin(password);
     if (!success) {
       setIsShaking(true);
       setTimeout(() => setIsShaking(false), 600);
+      setPassword('');
     }
   };
 
@@ -55,12 +47,12 @@ export function AdminLogin({ onLogin, isLoading, error: externalError, onBack }:
         style={{
           background: '#161616',
           border: '1px solid #2a2a2a',
+          borderTop: '3px solid #FFCC29',
           borderRadius: 16,
           padding: '48px 40px',
           width: '100%',
           maxWidth: 400,
           position: 'relative',
-          borderTop: '3px solid #FFCC29',
           animation: isShaking ? 'shake 0.5s ease-in-out' : 'none',
         }}
       >
@@ -71,7 +63,7 @@ export function AdminLogin({ onLogin, isLoading, error: externalError, onBack }:
               fontFamily: "'Bebas Neue', sans-serif",
               fontSize: 32,
               letterSpacing: 3,
-              color: '#ffffff',
+              color: '#fff',
               marginBottom: 4,
             }}
           >
@@ -107,65 +99,25 @@ export function AdminLogin({ onLogin, isLoading, error: externalError, onBack }:
           </div>
         </div>
 
-        {/* Email field */}
-        <div style={{ marginBottom: 16 }}>
-          <label
+        {/* Error */}
+        {error && (
+          <div
             style={{
-              display: 'block',
-              fontSize: 11,
-              fontWeight: 600,
-              letterSpacing: 1.5,
-              color: '#666',
-              textTransform: 'uppercase',
-              marginBottom: 8,
+              background: '#cc000015',
+              border: '1px solid #cc000040',
+              borderRadius: 8,
+              padding: '10px 14px',
+              fontSize: 13,
+              color: '#ff6b6b',
+              marginBottom: 16,
             }}
           >
-            Email
-          </label>
-          <div style={{ position: 'relative' }}>
-            <input
-              type="email"
-              value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setLocalError('');
-              }}
-              onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
-              placeholder="admin@bravosbrasil.com.br"
-              autoFocus
-              disabled={isLoading}
-              style={{
-                width: '100%',
-                padding: '14px 48px 14px 16px',
-                background: '#222',
-                border: `1.5px solid ${displayError ? '#cc0000' : '#333'}`,
-                borderRadius: 10,
-                color: '#fff',
-                fontSize: 14,
-                fontFamily: "'Inter', sans-serif",
-                outline: 'none',
-                boxSizing: 'border-box',
-                transition: 'border-color 0.2s',
-                opacity: isLoading ? 0.6 : 1,
-              }}
-            />
-            <div
-              style={{
-                position: 'absolute',
-                right: 14,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                color: '#555',
-                display: 'flex',
-              }}
-            >
-              <Mail size={18} />
-            </div>
+            {error}
           </div>
-        </div>
+        )}
 
-        {/* Password field */}
-        <div style={{ marginBottom: 16 }}>
+        {/* Token field */}
+        <div style={{ marginBottom: 20 }}>
           <label
             style={{
               display: 'block',
@@ -177,36 +129,30 @@ export function AdminLogin({ onLogin, isLoading, error: externalError, onBack }:
               marginBottom: 8,
             }}
           >
-            Senha de Acesso
+            Token de Acesso
           </label>
           <div style={{ position: 'relative' }}>
             <input
               type={showPassword ? 'text' : 'password'}
               value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setLocalError('');
-              }}
+              onChange={(e) => setPassword(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
               placeholder="••••••••••••"
-              disabled={isLoading}
+              autoFocus
               style={{
                 width: '100%',
-                padding: '14px 48px 14px 16px',
+                padding: '13px 48px 13px 14px',
                 background: '#222',
-                border: `1.5px solid ${displayError ? '#cc0000' : '#333'}`,
+                border: '1.5px solid #333',
                 borderRadius: 10,
                 color: '#fff',
                 fontSize: 16,
                 fontFamily: "'Inter', sans-serif",
                 outline: 'none',
                 boxSizing: 'border-box',
-                transition: 'border-color 0.2s',
-                opacity: isLoading ? 0.6 : 1,
               }}
             />
             <button
-              type="button"
               onClick={() => setShowPassword(!showPassword)}
               style={{
                 position: 'absolute',
@@ -224,64 +170,45 @@ export function AdminLogin({ onLogin, isLoading, error: externalError, onBack }:
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
-          {displayError && (
-            <p style={{ fontSize: 12, color: '#cc0000', marginTop: 6 }}>
-              {displayError}
-            </p>
-          )}
         </div>
 
-        {/* Submit button */}
+        {/* Submit */}
         <button
-          type="button"
           onClick={handleSubmit}
-          disabled={isLoading || (!email && !password)}
+          disabled={!password.trim()}
           style={{
             width: '100%',
             padding: '14px',
-            background:
-              isLoading || (!email && !password) ? '#1a1a1a' : '#00843D',
-            color: isLoading || (!email && !password) ? '#444' : '#fff',
+            background: password.trim() ? '#00843D' : '#1a1a1a',
+            color: password.trim() ? '#fff' : '#444',
             border: 'none',
             borderRadius: 10,
             fontFamily: "'Bebas Neue', sans-serif",
             fontSize: 18,
             letterSpacing: 2,
-            cursor:
-              isLoading || (!email && !password) ? 'not-allowed' : 'pointer',
+            cursor: password.trim() ? 'pointer' : 'not-allowed',
             transition: 'all 0.2s',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
           }}
         >
-          {isLoading && (
-            <Loader2
-              size={18}
-              style={{ animation: 'spin 0.8s linear infinite' }}
-            />
-          )}
-          {isLoading ? 'AUTENTICANDO...' : 'ENTRAR NO PAINEL'}
+          ENTRAR NO PAINEL
         </button>
 
         {onBack && (
           <button
             onClick={onBack}
             style={{
+              display: 'block',
+              margin: '12px auto 0',
               background: 'none',
               border: 'none',
               color: '#444',
               fontSize: 12,
               cursor: 'pointer',
-              marginTop: 12,
               textDecoration: 'underline',
               fontFamily: "'Inter', sans-serif",
-              width: '100%',
-              textAlign: 'center',
             }}
           >
-            &larr; Voltar sem entrar
+            &larr; Voltar
           </button>
         )}
 
@@ -291,26 +218,19 @@ export function AdminLogin({ onLogin, isLoading, error: externalError, onBack }:
             fontSize: 11,
             color: '#333',
             marginTop: 24,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
           }}
         >
-          <Lock size={10} /> Autenticado via Supabase Auth
+          Acesso restrito &bull; Bravos Brasil &copy; 2026
         </p>
       </div>
 
       <style>{`
         @keyframes shake {
-          0%, 100% { transform: translateX(0); }
+          0%,100% { transform: translateX(0); }
           20% { transform: translateX(-8px); }
           40% { transform: translateX(8px); }
           60% { transform: translateX(-6px); }
           80% { transform: translateX(6px); }
-        }
-        @keyframes spin {
-          to { transform: rotate(360deg); }
         }
       `}</style>
     </div>
