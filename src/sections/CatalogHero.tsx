@@ -79,7 +79,7 @@ export function CatalogHero({ totalProducts, hasActiveFilters }: CatalogHeroProp
         className="absolute inset-0 w-full h-[120%] -top-[10%]"
       >
         <img
-          src="/hero-bg.jpg"
+          src="/hero-catalogo.webp"
           alt="Catálogo Bravos Brasil"
           className="w-full h-full object-cover"
           loading="eager"
