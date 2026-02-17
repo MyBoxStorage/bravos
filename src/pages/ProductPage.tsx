@@ -13,15 +13,8 @@ import { Badge } from '@/components/ui/badge';
 import { Skeleton } from '@/components/ui/skeleton';
 import { Label } from '@/components/ui/label';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
-import {
-  Breadcrumb,
-  BreadcrumbList,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbPage,
-  BreadcrumbSeparator,
-} from '@/components/ui/breadcrumb';
 import { Header } from '@/sections/Header';
+import { ProductHero } from '@/sections/ProductHero';
 import { Footer } from '@/sections/Footer';
 import { TrustBadges } from '@/components/TrustBadges';
 import { FloatingWhatsApp } from '@/components/FloatingWhatsApp';
@@ -327,35 +320,9 @@ function ProductLoader({ slug }: { slug: string }) {
   return (
     <div className="min-h-screen bg-gray-50">
       <Header />
+      <ProductHero productName={product.name} category={product.category} />
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-28 pb-12">
-        {/* Breadcrumb */}
-        <Breadcrumb className="mb-8">
-          <BreadcrumbList>
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link to="/" className="font-body text-gray-500 hover:text-[#00843D]">
-                  Home
-                </Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbLink asChild>
-                <Link to="/catalogo" className="font-body text-gray-500 hover:text-[#00843D]">
-                  Catálogo
-                </Link>
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-            <BreadcrumbSeparator />
-            <BreadcrumbItem>
-              <BreadcrumbPage className="font-body text-gray-900">
-                {product.name}
-              </BreadcrumbPage>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         {/* Main Grid */}
         <div className="grid md:grid-cols-2 gap-8">
           {/* ── Left Column: Image ── */}
