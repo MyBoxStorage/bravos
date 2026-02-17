@@ -1,31 +1,104 @@
 import { useState, useEffect } from 'react';
+import { supabase, type User } from '@/lib/supabase';
 
-const SESSION_KEY = 'bravos_admin_auth';
-const CORRECT_PASSWORD = import.meta.env.VITE_ADMIN_PASSWORD || 'bravos2026';
+interface AdminAuthState {
+  user: User | null;
+  isAuthenticated: boolean;
+  isLoading: boolean;
+  error: string | null;
+}
 
-export function useAdminAuth() {
-  const [isAuthenticated, setIsAuthenticated] = useState(false);
-  const [isLoading, setIsLoading] = useState(true);
+export interface UseAdminAuthReturn extends AdminAuthState {
+  login: (email: string, password: string) => Promise<boolean>;
+  logout: () => Promise<void>;
+}
+
+export function useAdminAuth(): UseAdminAuthReturn {
+  const [state, setState] = useState<AdminAuthState>({
+    user: null,
+    isAuthenticated: false,
+    isLoading: true,
+    error: null,
+  });
 
   useEffect(() => {
-    const stored = sessionStorage.getItem(SESSION_KEY);
-    setIsAuthenticated(stored === 'authenticated');
-    setIsLoading(false);
+    supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) {
+        verifyAdminAccess(session.user);
+      } else {
+        setState((s) => ({ ...s, isLoading: false }));
+      }
+    });
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange(async (_event, session) => {
+      if (session?.user) {
+        await verifyAdminAccess(session.user);
+      } else {
+        setState({
+          user: null,
+          isAuthenticated: false,
+          isLoading: false,
+          error: null,
+        });
+      }
+    });
+
+    return () => subscription.unsubscribe();
   }, []);
 
-  const login = (password: string): boolean => {
-    if (password === CORRECT_PASSWORD) {
-      sessionStorage.setItem(SESSION_KEY, 'authenticated');
-      setIsAuthenticated(true);
-      return true;
+  async function verifyAdminAccess(user: User) {
+    const { data, error } = await supabase
+      .from('admin_users')
+      .select('email, is_active')
+      .eq('email', user.email ?? '')
+      .eq('is_active', true)
+      .single();
+
+    if (error || !data) {
+      await supabase.auth.signOut();
+      setState({
+        user: null,
+        isAuthenticated: false,
+        isLoading: false,
+        error: 'Acesso negado. Este email não tem permissão de admin.',
+      });
+      return;
     }
-    return false;
+
+    setState({ user, isAuthenticated: true, isLoading: false, error: null });
+  }
+
+  const login = async (
+    email: string,
+    password: string
+  ): Promise<boolean> => {
+    setState((s) => ({ ...s, isLoading: true, error: null }));
+
+    const { data, error } = await supabase.auth.signInWithPassword({
+      email: email.trim().toLowerCase(),
+      password,
+    });
+
+    if (error || !data.user) {
+      setState((s) => ({
+        ...s,
+        isLoading: false,
+        error:
+          error?.message === 'Invalid login credentials'
+            ? 'Email ou senha incorretos.'
+            : 'Erro ao fazer login. Tente novamente.',
+      }));
+      return false;
+    }
+
+    return true;
   };
 
-  const logout = () => {
-    sessionStorage.removeItem(SESSION_KEY);
-    setIsAuthenticated(false);
+  const logout = async (): Promise<void> => {
+    await supabase.auth.signOut();
   };
 
-  return { isAuthenticated, isLoading, login, logout };
+  return { ...state, login, logout };
 }

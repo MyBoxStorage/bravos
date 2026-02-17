@@ -1,24 +1,31 @@
 import { useState } from 'react';
-import { Lock, Eye, EyeOff } from 'lucide-react';
+import { Lock, Eye, EyeOff, Mail, Loader2 } from 'lucide-react';
 
 interface AdminLoginProps {
-  onLogin: (password: string) => boolean;
+  onLogin: (email: string, password: string) => Promise<boolean>;
+  isLoading: boolean;
+  error: string | null;
 }
 
-export function AdminLogin({ onLogin }: AdminLoginProps) {
+export function AdminLogin({ onLogin, isLoading, error: externalError }: AdminLoginProps) {
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
-  const [error, setError] = useState('');
+  const [localError, setLocalError] = useState('');
   const [isShaking, setIsShaking] = useState(false);
 
-  const handleSubmit = () => {
-    if (!password) return;
-    const success = onLogin(password);
+  const displayError = externalError || localError;
+
+  const handleSubmit = async () => {
+    if (!email || !password) {
+      setLocalError('Preencha email e senha.');
+      return;
+    }
+    setLocalError('');
+    const success = await onLogin(email, password);
     if (!success) {
-      setError('Senha incorreta. Tente novamente.');
       setIsShaking(true);
       setTimeout(() => setIsShaking(false), 600);
-      setPassword('');
     }
   };
 
@@ -56,6 +63,7 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
           animation: isShaking ? 'shake 0.5s ease-in-out' : 'none',
         }}
       >
+        {/* Logo */}
         <div style={{ textAlign: 'center', marginBottom: 32 }}>
           <div
             style={{
@@ -80,6 +88,7 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
           </div>
         </div>
 
+        {/* Lock icon */}
         <div style={{ textAlign: 'center', marginBottom: 28 }}>
           <div
             style={{
@@ -97,6 +106,64 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
           </div>
         </div>
 
+        {/* Email field */}
+        <div style={{ marginBottom: 16 }}>
+          <label
+            style={{
+              display: 'block',
+              fontSize: 11,
+              fontWeight: 600,
+              letterSpacing: 1.5,
+              color: '#666',
+              textTransform: 'uppercase',
+              marginBottom: 8,
+            }}
+          >
+            Email
+          </label>
+          <div style={{ position: 'relative' }}>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => {
+                setEmail(e.target.value);
+                setLocalError('');
+              }}
+              onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
+              placeholder="admin@bravosbrasil.com.br"
+              autoFocus
+              disabled={isLoading}
+              style={{
+                width: '100%',
+                padding: '14px 48px 14px 16px',
+                background: '#222',
+                border: `1.5px solid ${displayError ? '#cc0000' : '#333'}`,
+                borderRadius: 10,
+                color: '#fff',
+                fontSize: 14,
+                fontFamily: "'Inter', sans-serif",
+                outline: 'none',
+                boxSizing: 'border-box',
+                transition: 'border-color 0.2s',
+                opacity: isLoading ? 0.6 : 1,
+              }}
+            />
+            <div
+              style={{
+                position: 'absolute',
+                right: 14,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                color: '#555',
+                display: 'flex',
+              }}
+            >
+              <Mail size={18} />
+            </div>
+          </div>
+        </div>
+
+        {/* Password field */}
         <div style={{ marginBottom: 16 }}>
           <label
             style={{
@@ -117,16 +184,16 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
               value={password}
               onChange={(e) => {
                 setPassword(e.target.value);
-                setError('');
+                setLocalError('');
               }}
               onKeyDown={(e) => e.key === 'Enter' && handleSubmit()}
               placeholder="••••••••••••"
-              autoFocus
+              disabled={isLoading}
               style={{
                 width: '100%',
                 padding: '14px 48px 14px 16px',
                 background: '#222',
-                border: `1.5px solid ${error ? '#cc0000' : '#333'}`,
+                border: `1.5px solid ${displayError ? '#cc0000' : '#333'}`,
                 borderRadius: 10,
                 color: '#fff',
                 fontSize: 16,
@@ -134,6 +201,7 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
                 outline: 'none',
                 boxSizing: 'border-box',
                 transition: 'border-color 0.2s',
+                opacity: isLoading ? 0.6 : 1,
               }}
             />
             <button
@@ -155,32 +223,45 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
               {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
             </button>
           </div>
-          {error && (
+          {displayError && (
             <p style={{ fontSize: 12, color: '#cc0000', marginTop: 6 }}>
-              {error}
+              {displayError}
             </p>
           )}
         </div>
 
+        {/* Submit button */}
         <button
           type="button"
           onClick={handleSubmit}
-          disabled={!password}
+          disabled={isLoading || (!email && !password)}
           style={{
             width: '100%',
             padding: '14px',
-            background: password ? '#00843D' : '#1a1a1a',
-            color: password ? '#fff' : '#444',
+            background:
+              isLoading || (!email && !password) ? '#1a1a1a' : '#00843D',
+            color: isLoading || (!email && !password) ? '#444' : '#fff',
             border: 'none',
             borderRadius: 10,
             fontFamily: "'Bebas Neue', sans-serif",
             fontSize: 18,
             letterSpacing: 2,
-            cursor: password ? 'pointer' : 'not-allowed',
+            cursor:
+              isLoading || (!email && !password) ? 'not-allowed' : 'pointer',
             transition: 'all 0.2s',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 8,
           }}
         >
-          ENTRAR NO PAINEL
+          {isLoading && (
+            <Loader2
+              size={18}
+              style={{ animation: 'spin 0.8s linear infinite' }}
+            />
+          )}
+          {isLoading ? 'AUTENTICANDO...' : 'ENTRAR NO PAINEL'}
         </button>
 
         <p
@@ -189,9 +270,13 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
             fontSize: 11,
             color: '#333',
             marginTop: 24,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: 6,
           }}
         >
-          Acesso restrito &bull; Bravos Brasil &copy; 2026
+          <Lock size={10} /> Autenticado via Supabase Auth
         </p>
       </div>
 
@@ -202,6 +287,9 @@ export function AdminLogin({ onLogin }: AdminLoginProps) {
           40% { transform: translateX(8px); }
           60% { transform: translateX(-6px); }
           80% { transform: translateX(6px); }
+        }
+        @keyframes spin {
+          to { transform: rotate(360deg); }
         }
       `}</style>
     </div>

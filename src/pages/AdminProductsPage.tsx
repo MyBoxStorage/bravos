@@ -3,9 +3,9 @@ import { AdminLogin } from './AdminLogin';
 import ProductAdmin from '@/components/admin/ProductAdmin';
 
 export function AdminProductsPage() {
-  const { isAuthenticated, isLoading, login, logout } = useAdminAuth();
+  const { isAuthenticated, isLoading, error, login, logout } = useAdminAuth();
 
-  if (isLoading) {
+  if (isLoading && !error) {
     return (
       <div
         style={{
@@ -16,13 +16,25 @@ export function AdminProductsPage() {
           justifyContent: 'center',
         }}
       >
-        <div style={{ color: '#00843D', fontSize: 24 }}>...</div>
+        <div
+          style={{
+            width: 40,
+            height: 40,
+            border: '3px solid #00843D',
+            borderTopColor: 'transparent',
+            borderRadius: '50%',
+            animation: 'spin 0.8s linear infinite',
+          }}
+        />
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
       </div>
     );
   }
 
   if (!isAuthenticated) {
-    return <AdminLogin onLogin={login} />;
+    return (
+      <AdminLogin onLogin={login} isLoading={isLoading} error={error} />
+    );
   }
 
   return <ProductAdmin onLogout={logout} />;
