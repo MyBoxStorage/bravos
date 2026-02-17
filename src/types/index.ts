@@ -1,3 +1,12 @@
+export type Gender = 'masculino' | 'feminino' | 'unissex';
+
+export interface ProductImage {
+  url: string;
+  alt?: string;
+  type?: 'model' | 'product' | 'detail';
+  gender?: 'masculino' | 'feminino';
+}
+
 export interface Product {
   id: string;
   name: string;
@@ -5,7 +14,9 @@ export interface Product {
   price: number;
   originalPrice?: number;
   image: string;
+  images?: ProductImage[];
   category: string;
+  gender: Gender;
   sizes: string[];
   colors: string[];
   rating: number;

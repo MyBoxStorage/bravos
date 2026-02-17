@@ -325,6 +325,7 @@ export default function ProductAdmin({ onLogout }: ProductAdminProps) {
         : undefined,
       image: imagePath,
       category: draft.category,
+      gender: (draft as any).gender || 'unissex',
       sizes: draft.sizes,
       colors: draft.colors,
       rating: parseFloat(draft.rating) || 4.8,

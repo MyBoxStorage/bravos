@@ -1,8 +1,9 @@
 import { useState, useMemo, useCallback } from 'react';
-import type { Product, Category, Size, Color, SortOption } from '@/types';
+import type { Product, Category, Size, Color, Gender, SortOption } from '@/types';
 
 interface Filters {
   category: Category;
+  gender: '' | Gender;
   sizes: Size[];
   colors: Color[];
   priceRange: [number, number] | null;
@@ -12,6 +13,7 @@ interface UseProductFiltersReturn {
   filters: Filters;
   sortBy: SortOption;
   setCategory: (category: Category) => void;
+  setGender: (gender: '' | Gender) => void;
   toggleSize: (size: Size) => void;
   toggleColor: (color: Color) => void;
   setPriceRange: (range: [number, number] | null) => void;
@@ -23,6 +25,7 @@ interface UseProductFiltersReturn {
 
 const initialFilters: Filters = {
   category: 'all',
+  gender: '',
   sizes: [],
   colors: [],
   priceRange: null,
@@ -34,6 +37,10 @@ export function useProductFilters(products: Product[]): UseProductFiltersReturn 
 
   const setCategory = useCallback((category: Category) => {
     setFilters((prev) => ({ ...prev, category }));
+  }, []);
+
+  const setGender = useCallback((gender: '' | Gender) => {
+    setFilters((prev) => ({ ...prev, gender }));
   }, []);
 
   const toggleSize = useCallback((size: Size) => {
@@ -69,6 +76,14 @@ export function useProductFilters(products: Product[]): UseProductFiltersReturn 
     // Apply category filter
     if (filters.category !== 'all') {
       result = result.filter((p) => p.category === filters.category);
+    }
+
+    // Apply gender filter (unissex appears in all gender filters)
+    if (filters.gender) {
+      result = result.filter((p) => {
+        if (p.gender === 'unissex') return true;
+        return p.gender === filters.gender;
+      });
     }
 
     // Apply size filter
@@ -114,6 +129,7 @@ export function useProductFilters(products: Product[]): UseProductFiltersReturn 
   const hasActiveFilters = useMemo(() => {
     return (
       filters.category !== 'all' ||
+      filters.gender !== '' ||
       filters.sizes.length > 0 ||
       filters.colors.length > 0 ||
       filters.priceRange !== null
@@ -124,6 +140,7 @@ export function useProductFilters(products: Product[]): UseProductFiltersReturn 
     filters,
     sortBy,
     setCategory,
+    setGender,
     toggleSize,
     toggleColor,
     setPriceRange,

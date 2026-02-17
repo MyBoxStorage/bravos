@@ -1,4 +1,4 @@
-import { useState, useEffect, useMemo } from 'react';
+import { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Filter,
   Star,
@@ -48,7 +48,7 @@ import { CartProvider } from '@/hooks/useCart';
 import { MercadoPagoProvider } from '@/components/MercadoPagoProvider';
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
-import type { Product, Category, Size, Color, SortOption } from '@/types';
+import type { Product, Category, Size, Color, Gender, SortOption } from '@/types';
 
 /* ── Analytics helper (safe - no-op if gtag unavailable) ── */
 function trackEvent(eventName: string, params: Record<string, string>) {
@@ -74,6 +74,7 @@ function useCategoryCounts() {
 function FiltersContent({
   filters,
   setCategory,
+  setGender,
   toggleSize,
   toggleColor,
   setPriceRange,
@@ -83,11 +84,13 @@ function FiltersContent({
 }: {
   filters: {
     category: Category;
+    gender: '' | Gender;
     sizes: Size[];
     colors: Color[];
     priceRange: [number, number] | null;
   };
   setCategory: (cat: Category) => void;
+  setGender: (gender: '' | Gender) => void;
   toggleSize: (size: Size) => void;
   toggleColor: (color: Color) => void;
   setPriceRange: (range: [number, number] | null) => void;
@@ -129,6 +132,40 @@ function FiltersContent({
               />
               <span className="font-body text-sm text-gray-700">
                 {cat.name} ({categoryCounts[cat.id] ?? 0})
+              </span>
+            </label>
+          ))}
+        </div>
+      </div>
+
+      <div className="border-t border-gray-200 my-6" />
+
+      {/* GENERO */}
+      <div className="mb-6">
+        <h3 className="font-display text-sm uppercase text-gray-700 mb-3 tracking-wide">
+          GENERO
+        </h3>
+        <div className="flex flex-col gap-2">
+          {([
+            { id: '' as '' | Gender, label: 'Todos' },
+            { id: 'masculino' as '' | Gender, label: 'Masculino' },
+            { id: 'feminino' as '' | Gender, label: 'Feminino' },
+            { id: 'unissex' as '' | Gender, label: 'Unissex' },
+          ]).map((option) => (
+            <label
+              key={option.id}
+              className="flex items-center gap-2 cursor-pointer group"
+            >
+              <input
+                type="radio"
+                name="gender"
+                value={option.id}
+                checked={filters.gender === option.id}
+                onChange={() => setGender(option.id)}
+                className="accent-[#00843D]"
+              />
+              <span className="text-sm text-gray-700 group-hover:text-[#00843D] transition-colors font-body">
+                {option.label}
               </span>
             </label>
           ))}
@@ -429,6 +466,235 @@ function ProductDialog({
 }
 
 /* ══════════════════════════════════════════════════════════
+   PRODUCT CARD (with gender toggle)
+   ══════════════════════════════════════════════════════════ */
+function ProductCard({
+  product,
+  onSelect,
+  formatPrice,
+  formatInstallment,
+}: {
+  product: Product;
+  onSelect: (p: Product) => void;
+  formatPrice: (n: number) => string;
+  formatInstallment: (n: number) => string;
+}) {
+  const modelImages = useMemo(() => {
+    const imgs = product.images ?? [];
+    return {
+      masculino: imgs.find(
+        (img) => img.type === 'model' && img.gender === 'masculino'
+      ),
+      feminino: imgs.find(
+        (img) => img.type === 'model' && img.gender === 'feminino'
+      ),
+      default:
+        imgs.find((img) => img.type === 'model') ?? imgs[0] ?? null,
+    };
+  }, [product.images]);
+
+  const hasBothGenders = !!(modelImages.masculino && modelImages.feminino);
+
+  const initialGender = useMemo(() => {
+    if (!hasBothGenders) return 'default' as const;
+    return Math.random() > 0.5
+      ? ('masculino' as const)
+      : ('feminino' as const);
+  }, [hasBothGenders]);
+
+  const [currentGender, setCurrentGender] = useState<
+    'masculino' | 'feminino' | 'default'
+  >(initialGender);
+
+  const handleToggleGender = useCallback(() => {
+    if (!hasBothGenders) return;
+    setCurrentGender((prev) =>
+      prev === 'masculino' ? 'feminino' : 'masculino'
+    );
+  }, [hasBothGenders]);
+
+  const currentImageUrl = useMemo(() => {
+    if (
+      currentGender === 'masculino' &&
+      modelImages.masculino
+    )
+      return modelImages.masculino.url;
+    if (
+      currentGender === 'feminino' &&
+      modelImages.feminino
+    )
+      return modelImages.feminino.url;
+    if (modelImages.default) return modelImages.default.url;
+    return product.image;
+  }, [currentGender, modelImages, product.image]);
+
+  const showGenderBadge =
+    product.gender === 'unissex' && hasBothGenders;
+
+  return (
+    <div
+      className="group bg-white rounded-xl overflow-hidden border border-gray-100 hover-lift cursor-pointer"
+      onClick={() => onSelect(product)}
+    >
+      {/* Image */}
+      <div
+        className="relative aspect-[3/4] overflow-hidden bg-gray-100"
+        onMouseEnter={handleToggleGender}
+      >
+        <img
+          src={currentImageUrl}
+          alt={product.name}
+          loading="lazy"
+          className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
+        />
+
+        {/* Badges */}
+        <div className="absolute top-3 left-3 flex flex-col gap-2">
+          {product.isNew && (
+            <Badge className="bg-[#00843D] text-white font-body text-xs">
+              <Sparkles className="w-3 h-3 mr-1" />
+              NOVO
+            </Badge>
+          )}
+          {product.isBestseller && (
+            <Badge className="bg-[#FFCC29] text-[#002776] font-body text-xs">
+              <TrendingUp className="w-3 h-3 mr-1" />
+              MAIS VENDIDO
+            </Badge>
+          )}
+        </div>
+
+        {/* Gender badge (only for unissex with both photos) */}
+        {showGenderBadge && (
+          <div className="absolute bottom-3 left-3 flex gap-1.5 z-10">
+            <span
+              className={`text-[9px] font-bold px-2 py-0.5 rounded-full tracking-wider transition-all ${
+                currentGender === 'masculino'
+                  ? 'bg-[#002776] text-white'
+                  : 'bg-white/50 text-gray-500'
+              }`}
+            >
+              &#9794;
+            </span>
+            <span
+              className={`text-[9px] font-bold px-2 py-0.5 rounded-full tracking-wider transition-all ${
+                currentGender === 'feminino'
+                  ? 'bg-[#00843D] text-white'
+                  : 'bg-white/50 text-gray-500'
+              }`}
+            >
+              &#9792;
+            </span>
+          </div>
+        )}
+
+        {/* Mobile gender toggle button */}
+        {showGenderBadge && (
+          <button
+            className="md:hidden absolute bottom-3 left-3 bg-black/60 text-white text-xs px-3 py-1 rounded-full z-10"
+            onClick={(e) => {
+              e.stopPropagation();
+              handleToggleGender();
+            }}
+          >
+            {currentGender === 'masculino'
+              ? '\u2640 Ver feminino'
+              : '\u2642 Ver masculino'}
+          </button>
+        )}
+
+        {/* Hover hint (desktop only) */}
+        {showGenderBadge && (
+          <div className="hidden md:block absolute top-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300 bg-black/60 text-white text-[9px] px-2 py-1 rounded-full tracking-wider font-medium">
+            passe o mouse
+          </div>
+        )}
+
+        {/* Quick Add */}
+        <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
+          <Button
+            className="w-full bg-[#00843D] hover:bg-[#006633] text-white font-display"
+            onClick={(e) => {
+              e.stopPropagation();
+              onSelect(product);
+            }}
+          >
+            <ShoppingCart className="w-4 h-4 mr-2" />
+            COMPRAR
+          </Button>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="p-4">
+        <div className="flex items-center justify-between mb-2">
+          <div className="flex items-center gap-1">
+            <Star className="w-4 h-4 fill-[#FFCC29] text-[#FFCC29]" />
+            <span className="text-sm font-body text-gray-600">
+              {product.rating}
+            </span>
+          </div>
+
+          {/* Quick View HoverCard (desktop only) */}
+          <HoverCard openDelay={200} closeDelay={100}>
+            <HoverCardTrigger asChild>
+              <button
+                className="hidden md:flex items-center gap-1 text-xs text-gray-400 hover:text-[#00843D] transition-colors"
+                onClick={(e) => e.stopPropagation()}
+              >
+                <Eye className="w-3.5 h-3.5" />
+                <span>Ver</span>
+              </button>
+            </HoverCardTrigger>
+            <HoverCardContent
+              side="top"
+              className="w-72 p-0 overflow-hidden"
+            >
+              <img
+                src={currentImageUrl}
+                alt={product.name}
+                loading="lazy"
+                className="w-full h-40 object-cover"
+              />
+              <div className="p-3 space-y-1.5">
+                <p className="font-body font-medium text-sm text-gray-900 line-clamp-1">
+                  {product.name}
+                </p>
+                <p className="text-xs text-gray-500 font-body line-clamp-2">
+                  {product.description}
+                </p>
+                <div className="flex items-center justify-between">
+                  <span className="font-display text-lg text-[#00843D]">
+                    {formatPrice(product.price)}
+                  </span>
+                  <span className="text-xs text-gray-400 font-body">
+                    {product.sizes.length} tamanhos
+                  </span>
+                </div>
+              </div>
+            </HoverCardContent>
+          </HoverCard>
+        </div>
+
+        <h3 className="font-body font-medium text-gray-900 line-clamp-2 mb-2 group-hover:text-[#00843D] transition-colors">
+          {product.name}
+        </h3>
+
+        <div className="flex items-baseline gap-2">
+          <span className="font-display text-xl text-[#00843D]">
+            {formatPrice(product.price)}
+          </span>
+        </div>
+
+        <p className="text-sm text-gray-500 font-body mt-1">
+          ou 3x {formatInstallment(product.price)}
+        </p>
+      </div>
+    </div>
+  );
+}
+
+/* ══════════════════════════════════════════════════════════
    CATALOG CONTENT
    ══════════════════════════════════════════════════════════ */
 function CatalogContent() {
@@ -439,6 +705,7 @@ function CatalogContent() {
     filters,
     sortBy,
     setCategory,
+    setGender,
     toggleSize,
     toggleColor,
     setPriceRange,
@@ -467,6 +734,12 @@ function CatalogContent() {
     }
   }, [filters.colors]);
 
+  useEffect(() => {
+    if (filters.gender) {
+      trackEvent('filter_gender', { gender: filters.gender });
+    }
+  }, [filters.gender]);
+
   const formatPrice = (price: number) =>
     price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
@@ -476,6 +749,7 @@ function CatalogContent() {
   const filterProps = {
     filters,
     setCategory,
+    setGender,
     toggleSize,
     toggleColor,
     setPriceRange,
@@ -627,118 +901,13 @@ function CatalogContent() {
             ) : (
               <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                 {filteredProducts.map((product) => (
-                  <div
+                  <ProductCard
                     key={product.id}
-                    className="group bg-white rounded-xl overflow-hidden border border-gray-100 hover-lift cursor-pointer"
-                    onClick={() => setSelectedProduct(product)}
-                  >
-                    {/* Image */}
-                    <div className="relative aspect-[3/4] overflow-hidden bg-gray-100">
-                      {/* 5: Lazy loading */}
-                      <img
-                        src={product.image}
-                        alt={product.name}
-                        loading="lazy"
-                        className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
-                      />
-
-                      {/* Badges */}
-                      <div className="absolute top-3 left-3 flex flex-col gap-2">
-                        {product.isNew && (
-                          <Badge className="bg-[#00843D] text-white font-body text-xs">
-                            <Sparkles className="w-3 h-3 mr-1" />
-                            NOVO
-                          </Badge>
-                        )}
-                        {product.isBestseller && (
-                          <Badge className="bg-[#FFCC29] text-[#002776] font-body text-xs">
-                            <TrendingUp className="w-3 h-3 mr-1" />
-                            MAIS VENDIDO
-                          </Badge>
-                        )}
-                      </div>
-
-                      {/* Quick Add */}
-                      <div className="absolute bottom-0 left-0 right-0 p-4 translate-y-full group-hover:translate-y-0 transition-transform duration-300">
-                        <Button
-                          className="w-full bg-[#00843D] hover:bg-[#006633] text-white font-display"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            setSelectedProduct(product);
-                          }}
-                        >
-                          <ShoppingCart className="w-4 h-4 mr-2" />
-                          COMPRAR
-                        </Button>
-                      </div>
-                    </div>
-
-                    {/* Content */}
-                    <div className="p-4">
-                      <div className="flex items-center justify-between mb-2">
-                        <div className="flex items-center gap-1">
-                          <Star className="w-4 h-4 fill-[#FFCC29] text-[#FFCC29]" />
-                          <span className="text-sm font-body text-gray-600">
-                            {product.rating}
-                          </span>
-                        </div>
-
-                        {/* 7: Quick View HoverCard (desktop only) */}
-                        <HoverCard openDelay={200} closeDelay={100}>
-                          <HoverCardTrigger asChild>
-                            <button
-                              className="hidden md:flex items-center gap-1 text-xs text-gray-400 hover:text-[#00843D] transition-colors"
-                              onClick={(e) => e.stopPropagation()}
-                            >
-                              <Eye className="w-3.5 h-3.5" />
-                              <span>Ver</span>
-                            </button>
-                          </HoverCardTrigger>
-                          <HoverCardContent
-                            side="top"
-                            className="w-72 p-0 overflow-hidden"
-                          >
-                            <img
-                              src={product.image}
-                              alt={product.name}
-                              loading="lazy"
-                              className="w-full h-40 object-cover"
-                            />
-                            <div className="p-3 space-y-1.5">
-                              <p className="font-body font-medium text-sm text-gray-900 line-clamp-1">
-                                {product.name}
-                              </p>
-                              <p className="text-xs text-gray-500 font-body line-clamp-2">
-                                {product.description}
-                              </p>
-                              <div className="flex items-center justify-between">
-                                <span className="font-display text-lg text-[#00843D]">
-                                  {formatPrice(product.price)}
-                                </span>
-                                <span className="text-xs text-gray-400 font-body">
-                                  {product.sizes.length} tamanhos
-                                </span>
-                              </div>
-                            </div>
-                          </HoverCardContent>
-                        </HoverCard>
-                      </div>
-
-                      <h3 className="font-body font-medium text-gray-900 line-clamp-2 mb-2 group-hover:text-[#00843D] transition-colors">
-                        {product.name}
-                      </h3>
-
-                      <div className="flex items-baseline gap-2">
-                        <span className="font-display text-xl text-[#00843D]">
-                          {formatPrice(product.price)}
-                        </span>
-                      </div>
-
-                      <p className="text-sm text-gray-500 font-body mt-1">
-                        ou 3x {formatInstallment(product.price)}
-                      </p>
-                    </div>
-                  </div>
+                    product={product}
+                    onSelect={setSelectedProduct}
+                    formatPrice={formatPrice}
+                    formatInstallment={formatInstallment}
+                  />
                 ))}
               </div>
             )}
