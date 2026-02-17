@@ -1,5 +1,4 @@
 import { useState, useEffect, useMemo } from 'react';
-import { Link } from 'react-router-dom';
 import { Helmet } from 'react-helmet-async';
 import {
   Filter,
@@ -9,8 +8,8 @@ import {
   Sparkles,
   Share2,
   Eye,
-  ChevronRight,
 } from 'lucide-react';
+import { CatalogHero } from '@/sections/CatalogHero';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -515,34 +514,13 @@ function CatalogContent() {
 
       <Header />
 
-      {/* Spacer for fixed header */}
-      <div className="h-24" />
+      {/* Hero Banner with GSAP parallax + fade */}
+      <CatalogHero
+        totalProducts={filteredProducts.length}
+        hasActiveFilters={hasActiveFilters}
+      />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-        {/* 2: Breadcrumb */}
-        <nav className="flex items-center text-sm font-body mb-4">
-          <Link
-            to="/"
-            className="text-gray-500 hover:text-[#00843D] transition-colors"
-          >
-            Início
-          </Link>
-          <ChevronRight className="w-4 h-4 mx-2 text-gray-400" />
-          <span className="text-gray-900 font-medium">Catálogo</span>
-        </nav>
-
-        {/* Page Header */}
-        <div className="mb-8">
-          <h1 className="font-display text-5xl md:text-6xl text-[#00843D] mb-3">
-            EXPLORE TODA A COLEÇÃO
-          </h1>
-          {/* 6: Dynamic product count */}
-          <p className="font-body text-lg text-gray-600">
-            {filteredProducts.length === allProducts.length
-              ? `${filteredProducts.length}+ produtos disponíveis`
-              : `${filteredProducts.length} produto${filteredProducts.length !== 1 ? 's' : ''} encontrado${filteredProducts.length !== 1 ? 's' : ''}`}
-          </p>
-        </div>
 
         <div className="flex gap-8">
           {/* SIDEBAR FILTROS - DESKTOP */}
