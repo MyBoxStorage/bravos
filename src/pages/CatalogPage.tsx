@@ -1,5 +1,16 @@
-import { useState } from 'react';
-import { Filter, Star, ShoppingCart, TrendingUp, Sparkles } from 'lucide-react';
+import { useState, useEffect, useMemo } from 'react';
+import { Link } from 'react-router-dom';
+import { Helmet } from 'react-helmet-async';
+import {
+  Filter,
+  Star,
+  ShoppingCart,
+  TrendingUp,
+  Sparkles,
+  Share2,
+  Eye,
+  ChevronRight,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -25,6 +36,11 @@ import {
   SheetTitle,
   SheetTrigger,
 } from '@/components/ui/sheet';
+import {
+  HoverCard,
+  HoverCardContent,
+  HoverCardTrigger,
+} from '@/components/ui/hover-card';
 import { allProducts, categories, sizes, colors } from '@/data/products';
 import { useProductFilters } from '@/hooks/useProductFilters';
 import { useCart } from '@/hooks/useCart';
@@ -36,6 +52,27 @@ import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
 import type { Product, Category, Size, Color, SortOption } from '@/types';
 
+/* ── Analytics helper (safe - no-op if gtag unavailable) ── */
+function trackEvent(eventName: string, params: Record<string, string>) {
+  if (typeof window !== 'undefined' && 'gtag' in window) {
+    (window as any).gtag('event', eventName, params);
+  }
+}
+
+/* ── Dynamic category counts ── */
+function useCategoryCounts() {
+  return useMemo(() => {
+    const counts: Record<string, number> = { all: allProducts.length };
+    for (const p of allProducts) {
+      counts[p.category] = (counts[p.category] || 0) + 1;
+    }
+    return counts;
+  }, []);
+}
+
+/* ══════════════════════════════════════════════════════════
+   FILTERS SIDEBAR
+   ══════════════════════════════════════════════════════════ */
 function FiltersContent({
   filters,
   setCategory,
@@ -44,18 +81,25 @@ function FiltersContent({
   setPriceRange,
   clearFilters,
   hasActiveFilters,
+  categoryCounts,
 }: {
-  filters: { category: Category; sizes: Size[]; colors: Color[]; priceRange: [number, number] | null };
+  filters: {
+    category: Category;
+    sizes: Size[];
+    colors: Color[];
+    priceRange: [number, number] | null;
+  };
   setCategory: (cat: Category) => void;
   toggleSize: (size: Size) => void;
   toggleColor: (color: Color) => void;
   setPriceRange: (range: [number, number] | null) => void;
   clearFilters: () => void;
   hasActiveFilters: boolean;
+  categoryCounts: Record<string, number>;
 }) {
   return (
     <>
-      {/* Header dos filtros */}
+      {/* Clear all (only when filters active) */}
       {hasActiveFilters && (
         <div className="mb-4">
           <Button
@@ -86,7 +130,7 @@ function FiltersContent({
                 className="border-gray-300 data-[state=checked]:bg-[#00843D] data-[state=checked]:border-[#00843D]"
               />
               <span className="font-body text-sm text-gray-700">
-                {cat.name} ({cat.count})
+                {cat.name} ({categoryCounts[cat.id] ?? 0})
               </span>
             </label>
           ))}
@@ -159,8 +203,14 @@ function FiltersContent({
             { label: 'Todos os preços', range: null },
             { label: 'Até R$ 60', range: [0, 60] as [number, number] },
             { label: 'R$ 60 - R$ 100', range: [60, 100] as [number, number] },
-            { label: 'R$ 100 - R$ 150', range: [100, 150] as [number, number] },
-            { label: 'Acima de R$ 150', range: [150, 9999] as [number, number] },
+            {
+              label: 'R$ 100 - R$ 150',
+              range: [100, 150] as [number, number],
+            },
+            {
+              label: 'Acima de R$ 150',
+              range: [150, 9999] as [number, number],
+            },
           ].map((price) => (
             <label
               key={price.label}
@@ -188,6 +238,9 @@ function FiltersContent({
   );
 }
 
+/* ══════════════════════════════════════════════════════════
+   PRODUCT DIALOG  (with share + sticky mobile CTA)
+   ══════════════════════════════════════════════════════════ */
 function ProductDialog({
   product,
   isOpen,
@@ -213,23 +266,56 @@ function ProductDialog({
     onClose();
   };
 
-  const formatPrice = (price: number) => {
-    return price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+  const formatPrice = (price: number) =>
+    price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  const handleShare = async () => {
+    const shareData = {
+      title: product.name,
+      text: `Veja este produto: ${product.name} - ${formatPrice(product.price)}`,
+      url: window.location.href,
+    };
+
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch {
+        /* user cancelled */
+      }
+    } else {
+      await navigator.clipboard.writeText(
+        `${shareData.text}\n${shareData.url}`
+      );
+      toast.success('Link copiado!');
+    }
   };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto">
+      <DialogContent className="max-w-2xl max-h-[90vh] overflow-auto pb-24 md:pb-6">
         <DialogHeader>
-          <DialogTitle className="font-display text-2xl text-[#00843D]">
-            {product.name}
-          </DialogTitle>
+          <div className="flex items-start justify-between gap-4">
+            <DialogTitle className="font-display text-2xl text-[#00843D]">
+              {product.name}
+            </DialogTitle>
+            {/* 10: Share button */}
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleShare}
+              className="shrink-0"
+            >
+              <Share2 className="w-4 h-4 mr-1" />
+              <span className="hidden sm:inline">Compartilhar</span>
+            </Button>
+          </div>
         </DialogHeader>
 
         <div className="grid md:grid-cols-2 gap-6">
           <img
             src={product.image}
             alt={product.name}
+            loading="lazy"
             className="w-full h-80 object-cover rounded-lg"
           />
 
@@ -250,7 +336,9 @@ function ProductDialog({
             </p>
 
             <div>
-              <Label className="font-body font-medium mb-2 block">Tamanho</Label>
+              <Label className="font-body font-medium mb-2 block">
+                Tamanho
+              </Label>
               <RadioGroup
                 value={selectedSize}
                 onValueChange={setSelectedSize}
@@ -296,12 +384,17 @@ function ProductDialog({
                         className="w-4 h-4 rounded-full border"
                         style={{
                           backgroundColor:
-                            color === 'branco' ? '#fff'
-                            : color === 'preto' ? '#000'
-                            : color === 'verde' ? '#00843D'
-                            : color === 'azul' ? '#002776'
-                            : color === 'cinza' ? '#666'
-                            : '#FFCC29',
+                            color === 'branco'
+                              ? '#fff'
+                              : color === 'preto'
+                                ? '#000'
+                                : color === 'verde'
+                                  ? '#00843D'
+                                  : color === 'azul'
+                                    ? '#002776'
+                                    : color === 'cinza'
+                                      ? '#666'
+                                      : '#FFCC29',
                         }}
                       />
                       {color}
@@ -311,22 +404,38 @@ function ProductDialog({
               </RadioGroup>
             </div>
 
+            {/* Desktop CTA */}
             <Button
               onClick={handleAddToCart}
-              className="w-full bg-[#00843D] hover:bg-[#006633] text-white font-display text-lg py-6"
+              className="hidden md:flex w-full bg-[#00843D] hover:bg-[#006633] text-white font-display text-lg py-6"
             >
               <ShoppingCart className="w-5 h-5 mr-2" />
               ADICIONAR AO CARRINHO
             </Button>
           </div>
         </div>
+
+        {/* 4: Sticky Mobile CTA */}
+        <div className="fixed bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-200 md:hidden z-50 shadow-[0_-4px_12px_rgba(0,0,0,0.08)]">
+          <Button
+            onClick={handleAddToCart}
+            className="w-full bg-[#00843D] hover:bg-[#006633] text-white font-display text-lg py-6"
+          >
+            <ShoppingCart className="w-5 h-5 mr-2" />
+            COMPRAR &mdash; {formatPrice(product.price)}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   );
 }
 
+/* ══════════════════════════════════════════════════════════
+   CATALOG CONTENT
+   ══════════════════════════════════════════════════════════ */
 function CatalogContent() {
   const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const categoryCounts = useCategoryCounts();
 
   const {
     filters,
@@ -341,13 +450,30 @@ function CatalogContent() {
     hasActiveFilters,
   } = useProductFilters(allProducts);
 
-  const formatPrice = (price: number) => {
-    return price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  };
+  /* 3: Analytics - track filter changes */
+  useEffect(() => {
+    if (filters.category !== 'all') {
+      trackEvent('filter_category', { category: filters.category });
+    }
+  }, [filters.category]);
 
-  const formatInstallment = (price: number) => {
-    return (price / 3).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-  };
+  useEffect(() => {
+    if (filters.sizes.length > 0) {
+      trackEvent('filter_size', { sizes: filters.sizes.join(',') });
+    }
+  }, [filters.sizes]);
+
+  useEffect(() => {
+    if (filters.colors.length > 0) {
+      trackEvent('filter_color', { colors: filters.colors.join(',') });
+    }
+  }, [filters.colors]);
+
+  const formatPrice = (price: number) =>
+    price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
+
+  const formatInstallment = (price: number) =>
+    (price / 3).toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
 
   const filterProps = {
     filters,
@@ -357,23 +483,64 @@ function CatalogContent() {
     setPriceRange,
     clearFilters,
     hasActiveFilters,
+    categoryCounts,
   };
 
   return (
     <div className="min-h-screen bg-gray-50">
+      {/* 1: SEO Meta Tags */}
+      <Helmet>
+        <title>
+          Catálogo Completo - Bravos Brasil | Moda Patriótica
+        </title>
+        <meta
+          name="description"
+          content="Explore nossa coleção completa de roupas patrióticas brasileiras. +45 produtos com frete grátis. Camisetas, moletons, bonés e mais."
+        />
+        <meta
+          property="og:title"
+          content="Catálogo Bravos Brasil - Moda Patriótica"
+        />
+        <meta
+          property="og:description"
+          content="Coleção completa de roupas patrióticas brasileiras. Camisetas, moletons, bonés e acessórios com frete grátis."
+        />
+        <meta property="og:type" content="website" />
+        <meta
+          property="og:url"
+          content="https://bravosbrasil.com.br/catalogo"
+        />
+        <link rel="canonical" href="https://bravosbrasil.com.br/catalogo" />
+      </Helmet>
+
       <Header />
 
       {/* Spacer for fixed header */}
       <div className="h-24" />
 
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+        {/* 2: Breadcrumb */}
+        <nav className="flex items-center text-sm font-body mb-4">
+          <Link
+            to="/"
+            className="text-gray-500 hover:text-[#00843D] transition-colors"
+          >
+            Início
+          </Link>
+          <ChevronRight className="w-4 h-4 mx-2 text-gray-400" />
+          <span className="text-gray-900 font-medium">Catálogo</span>
+        </nav>
+
         {/* Page Header */}
         <div className="mb-8">
           <h1 className="font-display text-5xl md:text-6xl text-[#00843D] mb-3">
             EXPLORE TODA A COLEÇÃO
           </h1>
+          {/* 6: Dynamic product count */}
           <p className="font-body text-lg text-gray-600">
-            {filteredProducts.length}+ produtos disponíveis
+            {filteredProducts.length === allProducts.length
+              ? `${filteredProducts.length}+ produtos disponíveis`
+              : `${filteredProducts.length} produto${filteredProducts.length !== 1 ? 's' : ''} encontrado${filteredProducts.length !== 1 ? 's' : ''}`}
           </p>
         </div>
 
@@ -381,7 +548,9 @@ function CatalogContent() {
           {/* SIDEBAR FILTROS - DESKTOP */}
           <aside className="hidden lg:block w-72 shrink-0">
             <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 sticky top-28">
-              <h2 className="font-display text-xl text-gray-900 mb-4">FILTROS</h2>
+              <h2 className="font-display text-xl text-gray-900 mb-4">
+                FILTROS
+              </h2>
               <FiltersContent {...filterProps} />
             </div>
           </aside>
@@ -393,7 +562,10 @@ function CatalogContent() {
               {/* Mobile Filter Button */}
               <Sheet>
                 <SheetTrigger asChild>
-                  <Button variant="outline" className="lg:hidden flex items-center gap-2">
+                  <Button
+                    variant="outline"
+                    className="lg:hidden flex items-center gap-2"
+                  >
                     <Filter className="w-4 h-4" />
                     <span className="font-display text-sm">FILTROS</span>
                     {hasActiveFilters && (
@@ -403,7 +575,9 @@ function CatalogContent() {
                 </SheetTrigger>
                 <SheetContent side="left" className="w-80 overflow-y-auto">
                   <SheetHeader>
-                    <SheetTitle className="font-display text-xl">FILTROS</SheetTitle>
+                    <SheetTitle className="font-display text-xl">
+                      FILTROS
+                    </SheetTitle>
                   </SheetHeader>
                   <div className="mt-6">
                     <FiltersContent {...filterProps} />
@@ -433,7 +607,10 @@ function CatalogContent() {
                 <span className="font-body text-sm text-gray-600 hidden sm:block">
                   Ordenar por:
                 </span>
-                <Select value={sortBy} onValueChange={(v) => setSortBy(v as SortOption)}>
+                <Select
+                  value={sortBy}
+                  onValueChange={(v) => setSortBy(v as SortOption)}
+                >
                   <SelectTrigger className="w-[180px] font-body">
                     <SelectValue />
                   </SelectTrigger>
@@ -470,9 +647,11 @@ function CatalogContent() {
                   >
                     {/* Image */}
                     <div className="relative aspect-[3/4] overflow-hidden bg-gray-100">
+                      {/* 5: Lazy loading */}
                       <img
                         src={product.image}
                         alt={product.name}
+                        loading="lazy"
                         className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
                       />
 
@@ -509,11 +688,53 @@ function CatalogContent() {
 
                     {/* Content */}
                     <div className="p-4">
-                      <div className="flex items-center gap-1 mb-2">
-                        <Star className="w-4 h-4 fill-[#FFCC29] text-[#FFCC29]" />
-                        <span className="text-sm font-body text-gray-600">
-                          {product.rating}
-                        </span>
+                      <div className="flex items-center justify-between mb-2">
+                        <div className="flex items-center gap-1">
+                          <Star className="w-4 h-4 fill-[#FFCC29] text-[#FFCC29]" />
+                          <span className="text-sm font-body text-gray-600">
+                            {product.rating}
+                          </span>
+                        </div>
+
+                        {/* 7: Quick View HoverCard (desktop only) */}
+                        <HoverCard openDelay={200} closeDelay={100}>
+                          <HoverCardTrigger asChild>
+                            <button
+                              className="hidden md:flex items-center gap-1 text-xs text-gray-400 hover:text-[#00843D] transition-colors"
+                              onClick={(e) => e.stopPropagation()}
+                            >
+                              <Eye className="w-3.5 h-3.5" />
+                              <span>Ver</span>
+                            </button>
+                          </HoverCardTrigger>
+                          <HoverCardContent
+                            side="top"
+                            className="w-72 p-0 overflow-hidden"
+                          >
+                            <img
+                              src={product.image}
+                              alt={product.name}
+                              loading="lazy"
+                              className="w-full h-40 object-cover"
+                            />
+                            <div className="p-3 space-y-1.5">
+                              <p className="font-body font-medium text-sm text-gray-900 line-clamp-1">
+                                {product.name}
+                              </p>
+                              <p className="text-xs text-gray-500 font-body line-clamp-2">
+                                {product.description}
+                              </p>
+                              <div className="flex items-center justify-between">
+                                <span className="font-display text-lg text-[#00843D]">
+                                  {formatPrice(product.price)}
+                                </span>
+                                <span className="text-xs text-gray-400 font-body">
+                                  {product.sizes.length} tamanhos
+                                </span>
+                              </div>
+                            </div>
+                          </HoverCardContent>
+                        </HoverCard>
                       </div>
 
                       <h3 className="font-body font-medium text-gray-900 line-clamp-2 mb-2 group-hover:text-[#00843D] transition-colors">
@@ -549,6 +770,9 @@ function CatalogContent() {
   );
 }
 
+/* ══════════════════════════════════════════════════════════
+   PAGE WRAPPER (providers)
+   ══════════════════════════════════════════════════════════ */
 export function CatalogPage() {
   return (
     <MercadoPagoProvider>

@@ -1,5 +1,6 @@
 import { useEffect } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { HelmetProvider } from "react-helmet-async";
 import { AuthProvider } from "@/contexts/AuthContext";
 
 // Pages
@@ -23,6 +24,7 @@ function App() {
   }, []);
 
   return (
+    <HelmetProvider>
     <AuthProvider>
       <BrowserRouter>
         <Routes>
@@ -42,6 +44,7 @@ function App() {
         </Routes>
       </BrowserRouter>
     </AuthProvider>
+    </HelmetProvider>
   );
 }
 
