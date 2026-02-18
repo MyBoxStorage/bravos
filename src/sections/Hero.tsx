@@ -145,7 +145,7 @@ export function Hero() {
             size="lg"
             variant="outline"
             onClick={() => scrollToSection('#customization')}
-            className="border-2 border-white text-white hover:bg-white hover:text-[#00843D] font-display text-lg px-8 py-6 rounded-full transition-all"
+            className="border-2 border-white text-white bg-transparent hover:bg-white hover:text-[#00843D] font-display text-lg px-8 py-6 rounded-full transition-all [&:not(:hover)]:bg-transparent"
           >
             PERSONALIZAR VIA WHATSAPP
           </Button>
