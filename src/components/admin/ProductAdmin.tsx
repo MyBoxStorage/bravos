@@ -899,6 +899,7 @@ export default function ProductAdmin({ onLogout }: ProductAdminProps) {
       // 1) Upload pending files (images + color swatch images)
       const filesToUpload = collectFilesToUpload(images, draft.colorStock, slug);
       const uploadedUrls: UploadedUrlsMap = new Map();
+      let uploadFailed = false;
 
       if (filesToUpload.length > 0) {
         setSaveProgress(`Enviando imagens (0/${filesToUpload.length})...`);
@@ -912,17 +913,44 @@ export default function ProductAdmin({ onLogout }: ProductAdminProps) {
             });
             if (result.ok && result.publicUrl) {
               uploadedUrls.set(id, result.publicUrl);
+            } else {
+              uploadFailed = true;
+              showToast(`Falha no upload da imagem (${kind}). Verifique sua conexão e tente novamente.`);
+              break;
             }
           } catch (uploadErr) {
+            uploadFailed = true;
             if (import.meta.env.DEV) console.error(`Upload failed for ${kind}:`, uploadErr);
-            showToast(`Erro ao enviar imagem: ${kind}`);
+            showToast('Falha no upload da imagem. Verifique sua conexão e tente novamente.');
+            break;
           }
         }
+      }
+
+      if (uploadFailed) {
+        setIsSaving(false);
+        setSaveProgress('');
+        return;
       }
 
       // 2) Build payload
       setSaveProgress('Salvando produto...');
       const payload = buildProductPayload(draft, images, uploadedUrls, PRODUCT_COLORS);
+
+      // Safety net: block any blob URLs that may have leaked through
+      const hasBlobUrl = (obj: unknown): boolean => {
+        if (typeof obj === 'string') return obj.startsWith('blob:');
+        if (Array.isArray(obj)) return obj.some(hasBlobUrl);
+        if (obj && typeof obj === 'object') return Object.values(obj).some(hasBlobUrl);
+        return false;
+      };
+
+      if (hasBlobUrl(payload)) {
+        showToast('Erro: algumas imagens não foram enviadas corretamente. Tente fazer o upload novamente.');
+        setIsSaving(false);
+        setSaveProgress('');
+        return;
+      }
 
       // 3) Create or update
       if (editingId) {

@@ -53,6 +53,15 @@ interface ColorDef {
 
 const SIZES_ORDER = ['PP', 'P', 'M', 'G', 'GG', 'XG'];
 
+function isBlobUrl(url: string | null | undefined): boolean {
+  return typeof url === 'string' && url.startsWith('blob:');
+}
+
+function safeImageUrl(url: string | null | undefined): string | null {
+  if (!url || isBlobUrl(url)) return null;
+  return url;
+}
+
 // ── Upload URLs map ─────────────────────────────────────────────────────────
 
 /**
@@ -120,32 +129,38 @@ export function buildProductPayload(
 ): ProductPayload {
   const slug = generateSlug(draft.name);
 
-  // Build images array from uploaded URLs
-  const typedImages = images.map((img) => {
-    const url = uploadedUrls.get(img.id) || img.preview;
-    return {
-      url,
-      alt:
-        img.type === 'model' && img.gender
-          ? `Modelo ${img.gender} usando ${draft.name}`
-          : img.type === 'detail'
-            ? `Detalhe ${draft.name}`
-            : draft.name,
-      type: img.type,
-      gender: img.gender,
-    };
-  });
+  // Build images array from uploaded URLs (blob URLs are never persisted)
+  const typedImages = images
+    .map((img) => {
+      const url = safeImageUrl(uploadedUrls.get(img.id)) ?? safeImageUrl(img.preview);
+      if (!url) return null;
+      return {
+        url,
+        alt:
+          img.type === 'model' && img.gender
+            ? `Modelo ${img.gender} usando ${draft.name}`
+            : img.type === 'detail'
+              ? `Detalhe ${draft.name}`
+              : draft.name,
+        type: img.type,
+        gender: img.gender,
+      };
+    })
+    .filter((img): img is NonNullable<typeof img> => img !== null);
 
   // Active colors (at least one gender enabled)
   const activeColors = draft.colorStock.filter(
     (cs) => cs.feminino.enabled || cs.masculino.enabled,
   );
 
-  // Build color images from uploaded URLs
+  // Build color images from uploaded URLs (blob URLs filtered out)
   const colorImages = activeColors
     .filter((cs) => cs.image)
     .map((cs) => {
-      const url = cs.image ? (uploadedUrls.get(cs.image.id) || cs.image.preview) : '';
+      const url = cs.image
+        ? (safeImageUrl(uploadedUrls.get(cs.image.id)) ?? safeImageUrl(cs.image.preview))
+        : null;
+      if (!url) return null;
       return {
         url,
         alt: draft.name,
@@ -153,25 +168,25 @@ export function buildProductPayload(
         gender: undefined,
       };
     })
-    .filter((ci) => ci.url);
+    .filter((ci): ci is NonNullable<typeof ci> => ci !== null);
 
   const allImages = [...typedImages, ...colorImages];
 
-  // Cover image: main image or derive from list
+  // Cover image: main image or derive from list (blob URLs excluded)
   const mainImg = images.find((i) => i.isMain);
   const mainIdx = mainImg ? images.indexOf(mainImg) : 0;
   let coverImage: string | null = null;
   if (allImages.length > 0) {
-    coverImage = typedImages[mainIdx]?.url ?? allImages[0]?.url ?? null;
+    coverImage = safeImageUrl(typedImages[mainIdx]?.url) ?? safeImageUrl(allImages[0]?.url) ?? null;
   } else if (draft.image) {
-    coverImage = draft.image;
+    coverImage = safeImageUrl(draft.image);
   }
 
-  // Build colorStock for DB
+  // Build colorStock for DB (blob URLs stripped)
   const colorStock = activeColors.map((cs) => {
     const def = colorDefs.find((c) => c.id === cs.colorId);
     const colorImgUrl = cs.image
-      ? (uploadedUrls.get(cs.image.id) || cs.image.preview)
+      ? (safeImageUrl(uploadedUrls.get(cs.image.id)) ?? safeImageUrl(cs.image.preview))
       : null;
 
     return {
