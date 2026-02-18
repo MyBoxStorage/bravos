@@ -154,6 +154,34 @@ function ProductLoader({ slug }: { slug: string }) {
     return () => { cancelled = true; };
   }, [slug]);
 
+  // GA4 + Meta Pixel — view_item / ViewContent when product loads
+  useEffect(() => {
+    if (!product) return;
+
+    if (typeof window !== 'undefined' && (window as any).gtag) {
+      (window as any).gtag('event', 'view_item', {
+        currency: 'BRL',
+        value: product.price,
+        items: [{
+          item_id: product.id,
+          item_name: product.name,
+          item_category: product.category,
+          price: product.price,
+        }],
+      });
+    }
+
+    if (typeof window !== 'undefined' && (window as any).fbq) {
+      (window as any).fbq('track', 'ViewContent', {
+        content_ids: [product.id],
+        content_name: product.name,
+        content_category: product.category,
+        value: product.price,
+        currency: 'BRL',
+      });
+    }
+  }, [product?.id]);
+
   // Derive colors and sizes from colorStock (or fallback)
   const colorOptions = useMemo(
     () => (product ? getAvailableColors(product) : []),

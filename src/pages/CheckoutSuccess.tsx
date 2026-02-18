@@ -4,7 +4,7 @@ import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { useEffect, useState, useMemo } from 'react';
 import { getOrder } from '@/services/orders';
-import type { OrderResponse } from '@/types/order';
+import type { OrderResponse, OrderItem } from '@/types/order';
 import { formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
 import { buildWhatsAppLink } from '@/utils/whatsapp';
@@ -83,6 +83,33 @@ export default function CheckoutSuccess() {
 
     loadOrder();
   }, [resolvedRef, resolvedEmail]);
+
+  // GA4 + Meta Pixel — Purchase when order is loaded
+  useEffect(() => {
+    if (!order) return;
+
+    if (typeof window !== 'undefined' && (window as any).gtag) {
+      (window as any).gtag('event', 'purchase', {
+        transaction_id: order.orderId,
+        value: order.totals.total,
+        currency: 'BRL',
+        items: order.items?.map((item: OrderItem) => ({
+          item_id: item.productId,
+          item_name: item.name ?? undefined,
+          price: item.unitPrice,
+          quantity: item.quantity,
+        })) ?? [],
+      });
+    }
+
+    if (typeof window !== 'undefined' && (window as any).fbq) {
+      (window as any).fbq('track', 'Purchase', {
+        value: order.totals.total,
+        currency: 'BRL',
+        content_ids: order.items?.map((item) => item.productId) ?? [],
+      });
+    }
+  }, [order?.orderId]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-[#00843D]/10 via-[#00843D]/5 to-[#FFCC29]/10 p-4">
