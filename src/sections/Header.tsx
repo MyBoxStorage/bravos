@@ -12,11 +12,11 @@ import { CheckoutWithBrick } from '@/components/CheckoutWithBrick';
 import { TrustBadges } from '@/components/TrustBadges';
 
 const navLinks = [
-  { name: 'INÍCIO', href: '#hero' },
-  { name: 'COLEÇÃO', href: '#featured' },
+  { name: 'INÍCIO', href: '/' },
+  { name: 'COLEÇÃO', href: '/#featured' },
   { name: 'CATÁLOGO', href: '/catalogo', isRoute: true },
-  { name: 'SOBRE', href: '#values' },
-  { name: 'CONTATO', href: '#footer' },
+  { name: 'SOBRE', href: '/#values' },
+  { name: 'CONTATO', href: '/#footer' },
 ];
 
 export function Header() {
@@ -99,35 +99,18 @@ export function Header() {
 
           {/* Desktop Navigation */}
           <nav className="hidden lg:flex items-center gap-8">
-            {navLinks.map((link) =>
-              'isRoute' in link && link.isRoute ? (
-                <Link
-                  key={link.name}
-                  to={link.href}
-                  className={`font-body text-sm font-medium tracking-wider relative group transition-colors ${
-                    isScrolled ? 'text-gray-800 hover:text-[#00843D]' : 'text-white hover:text-[#FFCC29]'
-                  }`}
-                >
-                  {link.name}
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#FFCC29] transition-all duration-300 group-hover:w-full" />
-                </Link>
-              ) : (
-                <a
-                  key={link.name}
-                  href={link.href}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    scrollToSection(link.href);
-                  }}
-                  className={`font-body text-sm font-medium tracking-wider relative group transition-colors ${
-                    isScrolled ? 'text-gray-800 hover:text-[#00843D]' : 'text-white hover:text-[#FFCC29]'
-                  }`}
-                >
-                  {link.name}
-                  <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#FFCC29] transition-all duration-300 group-hover:w-full" />
-                </a>
-              )
-            )}
+            {navLinks.map((link) => (
+              <Link
+                key={link.name}
+                to={link.href}
+                className={`font-body text-sm font-medium tracking-wider relative group transition-colors ${
+                  isScrolled ? 'text-gray-800 hover:text-[#00843D]' : 'text-white hover:text-[#FFCC29]'
+                }`}
+              >
+                {link.name}
+                <span className="absolute -bottom-1 left-0 w-0 h-0.5 bg-[#FFCC29] transition-all duration-300 group-hover:w-full" />
+              </Link>
+            ))}
           </nav>
 
           {/* Actions */}
@@ -380,34 +363,18 @@ export function Header() {
                   </Link>
                 </>
               )}
-              {navLinks.map((link) =>
-                'isRoute' in link && link.isRoute ? (
-                  <Link
-                    key={link.name}
-                    to={link.href}
-                    onClick={() => setIsMobileMenuOpen(false)}
-                    className={`font-body text-sm font-medium tracking-wider py-2 transition-colors ${
-                      isScrolled ? 'text-gray-800' : 'text-white'
-                    }`}
-                  >
-                    {link.name}
-                  </Link>
-                ) : (
-                  <a
-                    key={link.name}
-                    href={link.href}
-                    onClick={(e) => {
-                      e.preventDefault();
-                      scrollToSection(link.href);
-                    }}
-                    className={`font-body text-sm font-medium tracking-wider py-2 transition-colors ${
-                      isScrolled ? 'text-gray-800' : 'text-white'
-                    }`}
-                  >
-                    {link.name}
-                  </a>
-                )
-              )}
+              {navLinks.map((link) => (
+                <Link
+                  key={link.name}
+                  to={link.href}
+                  onClick={() => setIsMobileMenuOpen(false)}
+                  className={`font-body text-sm font-medium tracking-wider py-2 transition-colors ${
+                    isScrolled ? 'text-gray-800' : 'text-white'
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              ))}
             </div>
           </nav>
         )}

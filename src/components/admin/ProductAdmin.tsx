@@ -68,6 +68,9 @@ interface DraftProduct {
   isBestseller: boolean;
   rating: string;
   reviews: string;
+  metaTitle: string;
+  metaDescription: string;
+  seoTags: string[];
 }
 
 const CATEGORIES = [
@@ -147,6 +150,9 @@ const emptyDraft: DraftProduct = {
   isBestseller: false,
   rating: '4.8',
   reviews: '0',
+  metaTitle: '',
+  metaDescription: '',
+  seoTags: [],
 };
 
 function generateSlug(name: string): string {
@@ -1110,6 +1116,9 @@ export default function ProductAdmin({ onLogout }: ProductAdminProps) {
       isBestseller: fullProduct.isBestseller || false,
       rating: fullProduct.rating.toString(),
       reviews: fullProduct.reviews.toString(),
+      metaTitle: (fullProduct as any).metaTitle || '',
+      metaDescription: (fullProduct as any).metaDescription || '',
+      seoTags: Array.isArray((fullProduct as any).seoTags) ? (fullProduct as any).seoTags : [],
     });
     setImages(restoredImages);
     setEditingId(fullProduct.id);
@@ -1647,6 +1656,63 @@ export default function ProductAdmin({ onLogout }: ProductAdminProps) {
                     }
                     placeholder="Descrição detalhada do produto..."
                   />
+                </div>
+
+                {/* SEO Section */}
+                <div style={{ gridColumn: '1 / -1', border: '1px dashed #444', borderRadius: 8, padding: 16 }}>
+                  <h3 style={{ fontSize: 13, fontWeight: 600, color: '#aaa', marginBottom: 12, display: 'flex', alignItems: 'center', gap: 8 }}>
+                    🔍 SEO — Gerado automaticamente ao salvar
+                  </h3>
+
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                    <div>
+                      <label style={s.label}>
+                        Meta Title <span style={{ color: '#666' }}>(máx 60 caracteres)</span>
+                      </label>
+                      <input
+                        style={s.input}
+                        type="text"
+                        maxLength={60}
+                        value={draft.metaTitle}
+                        onChange={(e) => setDraft((p) => ({ ...p, metaTitle: e.target.value }))}
+                        placeholder="Gerado automaticamente ao salvar..."
+                      />
+                      <span style={{ fontSize: 11, color: '#666' }}>{draft.metaTitle.length}/60</span>
+                    </div>
+
+                    <div>
+                      <label style={s.label}>
+                        Meta Description <span style={{ color: '#666' }}>(máx 160 caracteres)</span>
+                      </label>
+                      <textarea
+                        style={{ ...s.textarea, resize: 'none' as const }}
+                        maxLength={160}
+                        rows={3}
+                        value={draft.metaDescription}
+                        onChange={(e) => setDraft((p) => ({ ...p, metaDescription: e.target.value }))}
+                        placeholder="Gerado automaticamente ao salvar..."
+                      />
+                      <span style={{ fontSize: 11, color: '#666' }}>{draft.metaDescription.length}/160</span>
+                    </div>
+
+                    <div>
+                      <label style={s.label}>
+                        Tags SEO <span style={{ color: '#666' }}>(separadas por vírgula)</span>
+                      </label>
+                      <input
+                        style={s.input}
+                        type="text"
+                        value={draft.seoTags.join(', ')}
+                        onChange={(e) =>
+                          setDraft((p) => ({
+                            ...p,
+                            seoTags: e.target.value.split(',').map((t) => t.trim()).filter(Boolean),
+                          }))
+                        }
+                        placeholder="Gerado automaticamente ao salvar..."
+                      />
+                    </div>
+                  </div>
                 </div>
 
                 <div>

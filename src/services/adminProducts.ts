@@ -40,6 +40,10 @@ export interface AdminProductFull {
   isBestseller: boolean;
   rating: number;
   reviews: number;
+  metaTitle: string | null;
+  metaDescription: string | null;
+  seoTags: string[];
+  isPublished: boolean;
   createdAt: string;
   updatedAt: string;
 }

@@ -11,6 +11,7 @@ import { Request, Response } from 'express';
 import { prisma } from '../../utils/prisma.js';
 import { logger } from '../../utils/logger.js';
 import { sendError } from '../../utils/errorResponse.js';
+import { generateProductSEO } from '../../services/seoGenerator.js';
 
 // ── Helpers ─────────────────────────────────────────────────────────────────
 
@@ -142,6 +143,10 @@ const FULL_SELECT = {
   isBestseller: true,
   rating: true,
   reviews: true,
+  metaTitle: true,
+  metaDescription: true,
+  seoTags: true,
+  isPublished: true,
   createdAt: true,
   updatedAt: true,
 };
@@ -227,6 +232,15 @@ export async function createAdminProduct(req: Request, res: Response) {
     );
     const image = deriveCoverImage(body.image, body.images);
 
+    const seo = await generateProductSEO({
+      name: body.name,
+      description: body.description ?? '',
+      category: body.category,
+      gender: body.gender ?? 'unissex',
+      badge: body.badge,
+      price: typeof body.price === 'number' ? body.price : parseFloat(body.price) || 0,
+    });
+
     const product = await prisma.product.create({
       data: {
         name: body.name,
@@ -249,6 +263,10 @@ export async function createAdminProduct(req: Request, res: Response) {
         rating: typeof body.rating === 'number' ? body.rating : parseFloat(body.rating) || 4.8,
         reviews: typeof body.reviews === 'number' ? body.reviews : parseInt(body.reviews, 10) || 0,
         stock: body.stock ?? 0,
+        metaTitle: body.metaTitle || seo.metaTitle,
+        metaDescription: body.metaDescription || seo.metaDescription,
+        seoTags: body.seoTags?.length ? body.seoTags : seo.seoTags,
+        isPublished: body.isPublished !== undefined ? body.isPublished === true : true,
       },
       select: FULL_SELECT,
     });
@@ -323,6 +341,29 @@ export async function updateAdminProduct(req: Request, res: Response) {
 
     if (body.images !== undefined && body.image === undefined) {
       data.image = deriveCoverImage(null, body.images);
+    }
+
+    // SEO fields: auto-generate if metaTitle not provided by admin
+    if (body.metaTitle !== undefined) {
+      data.metaTitle = body.metaTitle;
+      data.metaDescription = body.metaDescription ?? '';
+      data.seoTags = body.seoTags ?? [];
+    } else if (body.name !== undefined) {
+      const seo = await generateProductSEO({
+        name: body.name,
+        description: body.description ?? '',
+        category: body.category ?? '',
+        gender: body.gender ?? 'unissex',
+        badge: body.badge,
+        price: typeof body.price === 'number' ? body.price : parseFloat(body.price) || 0,
+      });
+      data.metaTitle = seo.metaTitle;
+      data.metaDescription = seo.metaDescription;
+      data.seoTags = seo.seoTags;
+    }
+
+    if (body.isPublished !== undefined) {
+      data.isPublished = body.isPublished === true;
     }
 
     const product = await prisma.product.update({

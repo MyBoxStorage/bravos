@@ -183,7 +183,7 @@ export function Footer() {
               © 2025 BRAVOS BRASIL. Todos os direitos reservados.
             </p>
             <p className="font-body text-sm text-gray-500">
-              CNPJ: XX.XXX.XXX/XXXX-XX {/* SUBSTITUIR: CNPJ real */}
+              CNPJ: 65.125.279/0001-85
             </p>
           </div>
         </div>

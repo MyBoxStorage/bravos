@@ -42,6 +42,9 @@ interface DraftProductInput {
   isBestseller: boolean;
   rating: string;
   reviews: string;
+  metaTitle: string;
+  metaDescription: string;
+  seoTags: string[];
 }
 
 // Color metadata map
@@ -102,6 +105,9 @@ export interface ProductPayload {
   isBestseller: boolean;
   rating: number;
   reviews: number;
+  metaTitle: string;
+  metaDescription: string;
+  seoTags: string[];
 }
 
 function generateSlug(name: string): string {
@@ -223,6 +229,9 @@ export function buildProductPayload(
     isBestseller: draft.isBestseller,
     rating: parseFloat(draft.rating) || 4.8,
     reviews: parseInt(draft.reviews, 10) || 0,
+    metaTitle: draft.metaTitle || '',
+    metaDescription: draft.metaDescription || '',
+    seoTags: draft.seoTags ?? [],
   };
 }
 

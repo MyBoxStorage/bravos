@@ -37,6 +37,12 @@ model Product {
   rating        Float   @default(4.8)
   reviews       Int     @default(0)
 
+  // SEO fields
+  metaTitle       String?   @map("meta_title")
+  metaDescription String?   @map("meta_description")
+  seoTags         String[]  @map("seo_tags")
+  isPublished     Boolean   @default(true) @map("is_published")
+
   orderItems OrderItem[]
 
   @@map("products")

@@ -1,5 +1,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import { useSEO } from '@/hooks/useSEO';
 import {
   Star,
   ShoppingCart,
@@ -203,50 +204,14 @@ function ProductLoader({ slug }: { slug: string }) {
     }
   };
 
-  // SEO Meta Tags
-  useEffect(() => {
-    if (!product) return;
-
-    const prev = document.title;
-    document.title = `${product.name} - Bravos Brasil | Moda Patriótica`;
-
-    const metas: HTMLMetaElement[] = [];
-    const links: HTMLLinkElement[] = [];
-
-    const setMeta = (attr: string, value: string, content: string) => {
-      const el = document.createElement('meta');
-      el.setAttribute(attr, value);
-      el.content = content;
-      document.head.appendChild(el);
-      metas.push(el);
-    };
-
-    const productUrl = `https://bravosbrasil.com.br/produto/${product.slug ?? slug}`;
-    const priceFormatted = product.price.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL' });
-
-    setMeta('name', 'description', `${product.name} por ${priceFormatted}. ${product.description}`);
-    setMeta('property', 'og:title', `${product.name} - Bravos Brasil`);
-    setMeta('property', 'og:description', `${product.description} — ${priceFormatted}`);
-    setMeta('property', 'og:type', 'product');
-    setMeta('property', 'og:url', productUrl);
-    if (imageUrl) {
-      setMeta('property', 'og:image', imageUrl);
-    }
-    setMeta('property', 'product:price:amount', String(product.price));
-    setMeta('property', 'product:price:currency', 'BRL');
-
-    const canonical = document.createElement('link');
-    canonical.rel = 'canonical';
-    canonical.href = productUrl;
-    document.head.appendChild(canonical);
-    links.push(canonical);
-
-    return () => {
-      document.title = prev;
-      metas.forEach((el) => el.remove());
-      links.forEach((el) => el.remove());
-    };
-  }, [product, slug, imageUrl]);
+  // SEO Meta Tags (uses product.metaTitle/metaDescription when available)
+  useSEO({
+    title: product?.metaTitle || (product ? `${product.name} | BRAVOS BRASIL` : 'Carregando... | BRAVOS BRASIL'),
+    description: product?.metaDescription || product?.description || '',
+    canonical: product ? `/produto/${product.slug ?? slug}` : undefined,
+    ogImage: imageUrl || undefined,
+    ogType: 'product',
+  });
 
   // ── Loading state ──
   if (loading) {

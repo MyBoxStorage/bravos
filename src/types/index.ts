@@ -42,6 +42,10 @@ export interface Product {
   isNew?: boolean;
   isBestseller?: boolean;
   colorStock?: ColorStockItem[] | null;
+  metaTitle?: string | null;
+  metaDescription?: string | null;
+  seoTags?: string[];
+  isPublished?: boolean;
 }
 
 export interface CartItem {

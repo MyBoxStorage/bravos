@@ -34,6 +34,7 @@ export default function HomePage() {
             "name": "BRAVOS BRASIL",
             "url": "https://bravosbrasil.com.br",
             "logo": "https://bravosbrasil.com.br/og-image.jpg",
+            "taxID": "65.125.279/0001-85",
             "sameAs": [
               "https://www.instagram.com/bravosbrasilco/"
             ],
