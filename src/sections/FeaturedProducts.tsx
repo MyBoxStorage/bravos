@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dialog';
 import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Label } from '@/components/ui/label';
+import { getAvailableColors } from '@/utils/productStock';
 import { toast } from 'sonner';
 
 gsap.registerPlugin(ScrollTrigger);
@@ -111,47 +112,38 @@ function ProductDialog({ product, isOpen, onClose }: ProductDialogProps) {
               </RadioGroup>
             </div>
             
-            <div>
-              <Label className="font-body font-medium mb-2 block">Cor</Label>
-              <RadioGroup
-                value={selectedColor}
-                onValueChange={setSelectedColor}
-                className="flex flex-wrap gap-2"
-              >
-                {product.colors.map((color) => (
-                  <div key={color}>
-                    <RadioGroupItem
-                      value={color}
-                      id={`color-${color}`}
-                      className="peer sr-only"
-                    />
-                    <Label
-                      htmlFor={`color-${color}`}
-                      className="flex items-center gap-2 px-3 py-2 border-2 rounded-md cursor-pointer peer-data-[state=checked]:border-[#00843D] peer-data-[state=checked]:bg-[#00843D]/10 hover:bg-gray-100 transition-colors font-body capitalize"
-                    >
-                      <span
-                        className="w-4 h-4 rounded-full border"
-                        style={{
-                          backgroundColor:
-                            color === 'branco'
-                              ? '#fff'
-                              : color === 'preto'
-                              ? '#000'
-                              : color === 'verde'
-                              ? '#00843D'
-                              : color === 'azul'
-                              ? '#002776'
-                              : color === 'cinza'
-                              ? '#666'
-                              : '#FFCC29',
-                        }}
-                      />
-                      {color}
-                    </Label>
+            {/* Cores */}
+            {(() => {
+              const colorOptions = getAvailableColors(product);
+              if (!colorOptions.length) return null;
+              return (
+                <div>
+                  <Label className="font-body font-medium mb-2 block">Cor</Label>
+                  <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto pr-1">
+                    {colorOptions.map((co) => (
+                      <button
+                        key={co.id}
+                        type="button"
+                        onClick={() => setSelectedColor(co.id)}
+                        className={`flex items-center gap-2 px-3 py-2 border-2 rounded-md cursor-pointer transition-colors font-body capitalize text-sm ${
+                          selectedColor === co.id
+                            ? 'border-[#00843D] bg-[#00843D]/10'
+                            : 'border-gray-200 hover:bg-gray-100'
+                        }`}
+                      >
+                        {co.hex && (
+                          <span
+                            className="w-4 h-4 rounded-full border border-gray-300 flex-shrink-0"
+                            style={{ backgroundColor: co.hex }}
+                          />
+                        )}
+                        {co.name}
+                      </button>
+                    ))}
                   </div>
-                ))}
-              </RadioGroup>
-            </div>
+                </div>
+              );
+            })()}
             
             <Button
               onClick={handleAddToCart}
