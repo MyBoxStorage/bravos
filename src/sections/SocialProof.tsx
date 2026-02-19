@@ -20,9 +20,10 @@ const stats = [
   },
   {
     icon: Flag,
-    value: 100,
-    suffix: '%',
-    label: 'Feito com Orgulho',
+    value: 0,
+    suffix: '',
+    label: 'Identidade em cada peça',
+    textValue: 'VALORES QUE VESTEM',
   },
   {
     icon: Palette,
@@ -115,7 +116,11 @@ export function SocialProof() {
             <div key={index} className="text-center">
               <stat.icon className="w-10 h-10 text-[#FFCC29] mx-auto mb-3" />
               <div className="font-display text-4xl md:text-5xl text-white mb-1">
-                <AnimatedCounter value={stat.value} suffix={stat.suffix} />
+                {stat.textValue ? (
+                  <span className="font-display text-2xl md:text-3xl text-white">{stat.textValue}</span>
+                ) : (
+                  <AnimatedCounter value={stat.value} suffix={stat.suffix} />
+                )}
               </div>
               <p className="font-body text-sm text-white/80">{stat.label}</p>
             </div>
