@@ -4,8 +4,7 @@ import { CartProvider } from '@/hooks/useCart';
 import { Header } from '@/sections/Header';
 import { Footer } from '@/sections/Footer';
 import { ArrowLeft, RefreshCw, Shield, Truck, Clock, AlertCircle } from 'lucide-react';
-
-const WHATSAPP_NUMBER = '5524981313689';
+import { buildWhatsAppLink } from '@/utils/whatsapp';
 
 export default function PoliticaTrocas() {
   useEffect(() => { window.scrollTo(0, 0); }, []);
@@ -125,7 +124,7 @@ export default function PoliticaTrocas() {
               <h3 className="font-display text-3xl text-white mb-3">PRECISA DE AJUDA?</h3>
               <p className="font-body text-white/70 mb-6">Nossa equipe está pronta para te atender via WhatsApp</p>
               <a
-                href={`https://wa.me/${WHATSAPP_NUMBER}`}
+                href={buildWhatsAppLink('Olá! Vim pela página de atendimento da Bravos Brasil e preciso de ajuda.')}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-[#FFCC29] text-[#002776] font-display text-lg px-8 py-4 rounded-full hover:opacity-90 transition-all hover:scale-105"

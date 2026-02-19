@@ -4,8 +4,7 @@ import { CartProvider } from '@/hooks/useCart';
 import { Header } from '@/sections/Header';
 import { Footer } from '@/sections/Footer';
 import { ArrowLeft, FileText, ShoppingBag, AlertCircle, Scale } from 'lucide-react';
-
-const WHATSAPP_NUMBER = '5524981313689';
+import { buildWhatsAppLink } from '@/utils/whatsapp';
 
 export default function TermosDeUso() {
   useEffect(() => { window.scrollTo(0, 0); }, []);
@@ -121,7 +120,7 @@ export default function TermosDeUso() {
             <div className="bg-[#002776] rounded-xl p-8 text-center mb-10">
               <h3 className="font-display text-3xl text-white mb-3">AINDA TEM DÚVIDAS?</h3>
               <p className="font-body text-white/70 mb-6">Nossa equipe está pronta para te atender</p>
-              <a href={`https://wa.me/${WHATSAPP_NUMBER}`} target="_blank" rel="noopener noreferrer"
+              <a href={buildWhatsAppLink('Olá! Vim pela página de atendimento da Bravos Brasil e preciso de ajuda.')} target="_blank" rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 bg-[#FFCC29] text-[#002776] font-display text-lg px-8 py-4 rounded-full hover:opacity-90 transition-all hover:scale-105">
                 FALAR NO WHATSAPP →
               </a>
