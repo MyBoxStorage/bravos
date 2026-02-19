@@ -250,3 +250,86 @@ export async function sendOrderConfirmationEmail(data: OrderConfirmationData) {
     console.error('Erro ao enviar email de confirmação de pedido:', err);
   }
 }
+
+export interface OrderStatusEmailData {
+  name: string;
+  email: string;
+  orderId: string;
+  status: 'READY_FOR_MONTINK' | 'SENT_TO_MONTINK';
+  externalReference: string;
+}
+
+export async function sendOrderStatusEmail(data: OrderStatusEmailData) {
+  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return;
+
+  const statusConfig = {
+    READY_FOR_MONTINK: {
+      emoji: '⚙️',
+      label: 'Em Preparação',
+      message: 'Seu pedido foi confirmado e já está sendo preparado pela nossa equipe.',
+      detail: 'Em breve você receberá uma nova notificação quando seu pedido for enviado.',
+      color: '#002776',
+    },
+    SENT_TO_MONTINK: {
+      emoji: '🚚',
+      label: 'Enviado para Produção',
+      message: 'Seu pedido foi enviado para produção e está a caminho!',
+      detail: 'Acompanhe o status do seu pedido pelo link abaixo.',
+      color: '#00843D',
+    },
+  };
+
+  const config = statusConfig[data.status];
+
+  try {
+    await transporter.sendMail({
+      from: `"Bravos Brasil" <${process.env.GMAIL_USER}>`,
+      to: data.email,
+      subject: `${config.emoji} Pedido ${config.label} — Bravos Brasil #${data.externalReference.slice(-6).toUpperCase()}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; background: #ffffff;">
+          
+          <!-- Header -->
+          <div style="background: #00843D; padding: 40px 32px; text-align: center; border-radius: 12px 12px 0 0;">
+            <p style="color: #FFCC29; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; margin: 0 0 8px; font-weight: bold;">ATUALIZAÇÃO DO PEDIDO</p>
+            <h1 style="color: #ffffff; font-size: 32px; margin: 0; letter-spacing: 4px; font-weight: 900;">BRAVOS BRASIL</h1>
+          </div>
+
+          <!-- Status banner -->
+          <div style="background: ${config.color}; padding: 24px 32px; text-align: center;">
+            <p style="font-size: 32px; margin: 0 0 8px;">${config.emoji}</p>
+            <h2 style="color: #ffffff; font-size: 22px; margin: 0; font-weight: 700;">${config.label}</h2>
+          </div>
+
+          <!-- Body -->
+          <div style="padding: 32px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px;">
+            <p style="color: #374151; font-size: 16px; margin: 0 0 8px;">Olá, <strong>${data.name.split(' ')[0]}</strong>!</p>
+            <p style="color: #374151; font-size: 15px; margin: 0 0 24px; line-height: 1.6;">${config.message}</p>
+
+            <!-- Número do pedido -->
+            <div style="background: #f9fafb; border: 1px solid #e5e7eb; border-radius: 8px; padding: 16px; margin-bottom: 24px; text-align: center;">
+              <p style="color: #6b7280; font-size: 12px; margin: 0 0 4px; text-transform: uppercase; letter-spacing: 1px;">Número do pedido</p>
+              <p style="color: #002776; font-size: 20px; font-weight: bold; margin: 0;">#${data.externalReference.slice(-6).toUpperCase()}</p>
+            </div>
+
+            <p style="color: #6b7280; font-size: 14px; margin: 0 0 24px;">${config.detail}</p>
+
+            <!-- CTA -->
+            <div style="text-align: center;">
+              <a href="https://bravosbrasil.com.br/order?ref=${encodeURIComponent(data.externalReference)}" style="display: inline-block; background: #00843D; color: #FFCC29; text-decoration: none; font-size: 14px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; padding: 16px 40px; border-radius: 50px;">
+                ACOMPANHAR PEDIDO →
+              </a>
+            </div>
+
+            <p style="color: #9ca3af; font-size: 12px; text-align: center; margin-top: 24px;">
+              Dúvidas? Entre em contato via WhatsApp.<br>
+              Bravos Brasil — Veste seus valores.
+            </p>
+          </div>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.error('Erro ao enviar email de status do pedido:', err);
+  }
+}

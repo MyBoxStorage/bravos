@@ -22,6 +22,7 @@ import { pickOrderItemImage } from '@/utils/productImages';
 import { formatCurrency } from '@/lib/utils';
 import { toast } from 'sonner';
 import { buildWhatsAppLink } from '@/utils/whatsapp';
+import { useOrderEvents } from '@/hooks/useOrderEvents';
 
 const PENDING_AUTO_REFRESH_MS = 30_000;
 
@@ -122,6 +123,33 @@ export default function OrderTracking() {
   const [simulatedStatus, setSimulatedStatus] = useState<OrderStatus | null>(null);
   const pendingAutoRefreshDone = useRef(false);
   const stateAppliedRef = useRef(false);
+
+  const statusLabels: Record<string, string> = {
+    PAID: '✅ Pagamento confirmado!',
+    READY_FOR_MONTINK: '⚙️ Seu pedido está em preparação',
+    SENT_TO_MONTINK: '🚚 Seu pedido foi enviado para produção',
+    CANCELED: '❌ Pedido cancelado',
+  };
+
+  useOrderEvents(
+    order?.externalReference ?? null,
+    email || null,
+    (newStatus) => {
+      setOrder((prev) => (prev ? { ...prev, status: newStatus as OrderStatus } : prev));
+      const label = statusLabels[newStatus];
+      if (label) {
+        toast.success(label, {
+          duration: 6000,
+          style: {
+            background: '#002776',
+            color: '#ffffff',
+            border: '1px solid #00843D',
+            fontFamily: 'var(--font-body)',
+          },
+        });
+      }
+    }
+  );
 
   useEffect(() => {
     if (!import.meta.env.DEV) return;

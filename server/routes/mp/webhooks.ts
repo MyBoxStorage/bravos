@@ -14,7 +14,8 @@ import { logger } from '../../utils/logger.js';
 import { sendError } from '../../utils/errorResponse.js';
 import { fetchMpPayment, MpHttpError } from '../../services/mp/fetchPayment.js';
 import { mapMpStatusToOrderStatus } from '../../services/mp/statusMapper.js';
-import { sendOrderConfirmationEmail } from '../../utils/email.js';
+import { sendOrderConfirmationEmail, sendOrderStatusEmail } from '../../utils/email.js';
+import { notifyOrderStatusChange } from '../../utils/sse.js';
 
 /**
  * Valida assinatura do webhook conforme documentação Mercado Pago.
@@ -429,6 +430,10 @@ async function processPaymentEvent(paymentId: string, webhookEventId: string) {
       },
     });
 
+    if (order.payerEmail) {
+      notifyOrderStatusChange(order.externalReference, order.payerEmail, orderStatus);
+    }
+
     // ========== LIBERAR CRÉDITOS AUTOMÁTICO ==========
     // Se o pagamento foi aprovado E o pedido tem um comprador (buyerId)
     // E ainda não liberou créditos, libera +5 créditos
@@ -512,6 +517,20 @@ async function processPaymentEvent(paymentId: string, webhookEventId: string) {
         })),
         shippingAddress,
       }).catch((err) => logger.error('mp_webhook_error', { event: 'mp_webhook_error', stage: 'order_confirmation_email', orderId: order.id, message: err instanceof Error ? err.message : 'Unknown' }));
+    }
+
+    // Email de atualização de status (READY_FOR_MONTINK / SENT_TO_MONTINK)
+    if (
+      (orderStatus === 'READY_FOR_MONTINK' || orderStatus === 'SENT_TO_MONTINK') &&
+      order.payerEmail
+    ) {
+      sendOrderStatusEmail({
+        name: order.payerName || 'Cliente',
+        email: order.payerEmail,
+        orderId: order.id,
+        status: orderStatus as 'READY_FOR_MONTINK' | 'SENT_TO_MONTINK',
+        externalReference: order.externalReference,
+      }).catch((err) => console.error('Erro ao enviar email de status:', err));
     }
 
     // Se pedido está READY_FOR_MONTINK, enfileirar fulfillment (fire-and-forget)

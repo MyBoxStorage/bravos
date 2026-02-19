@@ -60,6 +60,7 @@ import { getMyGenerations } from './routes/user/my-generations.js';
 import { getMyOrders } from './routes/user/my-orders.js';
 import { cleanupExpiredGenerations } from './routes/internal/cleanup-expired-generations.js';
 import { sendError } from './utils/errorResponse.js';
+import { orderEventsHandler } from './utils/sse.js';
 
 // Carrega variáveis de ambiente
 dotenv.config();
@@ -222,6 +223,7 @@ app.get('/api/catalog/products', rateLimitCatalog, listCatalogProducts);
 app.get('/api/catalog/products/:slug', rateLimitCatalog, getCatalogProduct);
 app.post('/api/checkout/create-order', createOrder);
 app.get('/api/orders/:externalReference', rateLimitGetOrder, getOrder);
+app.get('/api/orders/:externalReference/events', orderEventsHandler);
 app.post('/api/orders/:externalReference/update-payment', updateOrderPayment);
 app.post('/api/orders/link', requireAuth, linkOrder);
 app.post(
