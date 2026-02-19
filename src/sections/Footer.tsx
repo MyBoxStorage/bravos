@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { Link } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { Instagram, /* Facebook, Youtube, Twitter, */ Shield, Lock } from 'lucide-react';
@@ -15,10 +16,10 @@ const quickLinks = [
 
 const supportLinks = [
   { name: 'FAQ', href: '/#faq' },
-  { name: 'Trocas e devoluções', href: '/trocas-e-devolucoes' }, /* TODO: criar página */
-  { name: 'Política de privacidade', href: '/politica-de-privacidade' }, /* TODO: criar página */
-  { name: 'Termos de uso', href: '/termos-de-uso' }, /* TODO: criar página */
-  { name: 'Rastreamento de pedido', href: '/order' },
+  { name: 'Trocas e devoluções', href: '/trocas-e-devolucoes', isRoute: true },
+  { name: 'Política de privacidade', href: '/politica-de-privacidade' },
+  { name: 'Termos de uso', href: '/termos-de-uso' },
+  { name: 'Rastreamento de pedido', href: '/order', isRoute: true },
 ];
 
 /* Redes sociais ativas (demais serão adicionadas quando tiverem URL real)
@@ -134,12 +135,21 @@ export function Footer() {
             <ul className="space-y-3">
               {supportLinks.map((link) => (
                 <li key={link.name}>
-                  <a
-                    href={link.href}
-                    className="font-body text-gray-400 hover:text-[#FFCC29] transition-colors"
-                  >
-                    {link.name}
-                  </a>
+                  {'isRoute' in link && link.isRoute ? (
+                    <Link
+                      to={link.href}
+                      className="font-body text-gray-400 hover:text-[#FFCC29] transition-colors"
+                    >
+                      {link.name}
+                    </Link>
+                  ) : (
+                    <a
+                      href={link.href}
+                      className="font-body text-gray-400 hover:text-[#FFCC29] transition-colors"
+                    >
+                      {link.name}
+                    </a>
+                  )}
                 </li>
               ))}
             </ul>

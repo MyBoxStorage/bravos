@@ -12,6 +12,7 @@ import UserDashboard from "@/pages/UserDashboard";
 import { MinhasEstampasPage } from "@/pages/MinhasEstampasPage";
 import { CatalogPage } from "@/pages/CatalogPage";
 import ProductPage from "@/pages/ProductPage";
+import PoliticaTrocas from "@/pages/PoliticaTrocas";
 
 // Admin — lazy loaded to avoid Supabase env crash in production
 const AdminUnifiedPage = lazy(() =>
@@ -45,6 +46,7 @@ function App() {
             </Suspense>
           }
         />
+        <Route path="/trocas-e-devolucoes" element={<PoliticaTrocas />} />
         <Route path="/minhas-estampas" element={<MinhasEstampasPage />} />
         </Routes>
       </BrowserRouter>
