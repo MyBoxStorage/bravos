@@ -22,7 +22,7 @@ export async function sendAbandonedCartEmails(req: Request, res: Response): Prom
     where: {
       status: 'PENDING',
       mpPaymentId: null,
-      payerEmail: { not: null },
+      payerEmail: { not: undefined },
       abandonedEmailSentAt: null,
       createdAt: { lt: cutoff },
     },
