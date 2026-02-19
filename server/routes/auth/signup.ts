@@ -59,11 +59,12 @@ export async function signup(req: Request, res: Response): Promise<void> {
       },
     });
 
-    await sendVerificationEmail({
+    // Envio em background — não bloqueia nem falha o signup
+    sendVerificationEmail({
       name: name || 'Cliente',
       email,
       token: verifyToken,
-    });
+    }).catch(err => console.error('Erro ao enviar email de verificação:', err));
 
     console.log(`✅ New user registered (pending verification): ${newUser.email} (${newUser.id})`);
 

@@ -52,6 +52,7 @@ import { signup } from './routes/auth/signup.js';
 import { login } from './routes/auth/login.js';
 import { me } from './routes/auth/me.js';
 import { verifyEmail } from './routes/auth/verify-email.js';
+import { resendVerification } from './routes/auth/resend-verification.js';
 import { requireAuth, optionalAuth } from './utils/authMiddleware.js';
 import { generateStamp } from './routes/generate-stamp/generate.js';
 import { listMyGenerations } from './routes/generate-stamp/list.js';
@@ -298,6 +299,7 @@ const authLimiter = rateLimit({
 app.post('/api/auth/signup', authLimiter, signup);
 app.post('/api/auth/login', login);
 app.post('/api/auth/verify-email', authLimiter, verifyEmail);
+app.post('/api/auth/resend-verification', authLimiter, resendVerification);
 app.get('/api/auth/me', requireAuth, me);
 
 // Generate stamp (requires auth + credits)

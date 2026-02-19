@@ -4,6 +4,7 @@ import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
 import { useAuth } from '../contexts/AuthContext';
+import { apiConfig } from '@/config/api';
 import { X } from 'lucide-react';
 
 const loginSchema = z.object({
@@ -35,6 +36,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
   const [pendingVerifyUserId, setPendingVerifyUserId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState(0);
   const { login, signup, verifyEmail } = useAuth();
 
   const form = useForm<SignupFormData>({
@@ -60,6 +62,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
           setPendingVerifyUserId(result.userId);
           setStep('verify');
           setError('');
+          setResendCountdown(60);
           return;
         }
         form.reset();
@@ -105,6 +108,31 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
     setError('');
     verifyForm.reset();
   };
+
+  const handleResendCode = async () => {
+    if (resendCountdown > 0) return;
+    setLoading(true);
+    setError('');
+    try {
+      const res = await fetch(`${apiConfig.baseURL}/api/auth/resend-verification`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ userId: pendingVerifyUserId }),
+      });
+      if (!res.ok) throw new Error('Erro ao reenviar código');
+      setResendCountdown(60);
+    } catch {
+      setError('Não foi possível reenviar o código. Tente novamente.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (resendCountdown <= 0) return;
+    const timer = setTimeout(() => setResendCountdown(prev => prev - 1), 1000);
+    return () => clearTimeout(timer);
+  }, [resendCountdown]);
 
   useEffect(() => {
     if (isOpen) {
@@ -178,6 +206,17 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
                 className="w-full bg-[#00843D] hover:bg-[#006633] text-white py-3 rounded-full font-display text-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-[1.02]"
               >
                 {loading ? 'Verificando...' : 'Confirmar'}
+              </button>
+
+              <button
+                type="button"
+                onClick={handleResendCode}
+                disabled={resendCountdown > 0 || loading}
+                className="w-full font-body text-sm text-[#00843D] hover:text-[#006633] disabled:text-gray-400 transition-colors py-2"
+              >
+                {resendCountdown > 0
+                  ? `Reenviar código em ${resendCountdown}s`
+                  : 'Não recebeu? Reenviar código'}
               </button>
             </form>
 
