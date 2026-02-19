@@ -62,6 +62,7 @@ import { getMyOrders } from './routes/user/my-orders.js';
 import { cleanupExpiredGenerations } from './routes/internal/cleanup-expired-generations.js';
 import { sendError } from './utils/errorResponse.js';
 import { orderEventsHandler } from './utils/sse.js';
+import { subscribeNewsletter } from './routes/newsletter/subscribe.js';
 
 // Carrega variáveis de ambiente
 dotenv.config();
@@ -308,6 +309,9 @@ const authLimiter = rateLimit({
   standardHeaders: true,
   legacyHeaders: false,
 });
+
+// Newsletter
+app.post('/api/newsletter/subscribe', subscribeNewsletter);
 
 // Auth routes
 app.post('/api/auth/signup', authLimiter, signup);

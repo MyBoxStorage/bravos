@@ -334,6 +334,51 @@ export async function sendOrderStatusEmail(data: OrderStatusEmailData) {
   }
 }
 
+// ==================== WELCOME COUPON EMAIL (Newsletter) ====================
+
+export async function sendWelcomeCouponEmail(email: string) {
+  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return;
+  try {
+    await transporter.sendMail({
+      from: `"Bravos Brasil" <${process.env.GMAIL_USER}>`,
+      to: email,
+      subject: '🎁 Seu cupom de 10% OFF está aqui — Bravos Brasil',
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; background: #ffffff;">
+          <div style="background: #00843D; padding: 40px 32px; text-align: center; border-radius: 12px 12px 0 0;">
+            <p style="color: #FFCC29; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; margin: 0 0 8px; font-weight: bold;">PRESENTE EXCLUSIVO</p>
+            <h1 style="color: #ffffff; font-size: 32px; margin: 0; letter-spacing: 4px; font-weight: 900;">BRAVOS BRASIL</h1>
+          </div>
+          <div style="background: #002776; padding: 28px 32px; text-align: center;">
+            <p style="font-size: 48px; margin: 0 0 8px;">🎁</p>
+            <h2 style="color: #ffffff; font-size: 22px; margin: 0 0 4px; font-weight: 700;">Seu desconto está esperando!</h2>
+            <p style="color: rgba(255,255,255,0.75); font-size: 14px; margin: 0;">Use na sua primeira compra</p>
+          </div>
+          <div style="padding: 32px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px;">
+            <div style="background: #f9fafb; border: 2px dashed #00843D; border-radius: 12px; padding: 24px; text-align: center; margin-bottom: 24px;">
+              <p style="color: #6b7280; font-size: 12px; text-transform: uppercase; letter-spacing: 2px; margin: 0 0 8px;">Seu cupom exclusivo</p>
+              <p style="color: #00843D; font-size: 36px; font-weight: 900; letter-spacing: 6px; margin: 0 0 8px;">BEMVINDO10</p>
+              <p style="color: #002776; font-size: 20px; font-weight: bold; margin: 0;">10% OFF na primeira compra</p>
+            </div>
+            <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0 0 24px;">
+              ⚠️ Cupom válido para uma única utilização.<br>
+              <strong>Não acumulável</strong> com outras promoções ou cupons.
+            </p>
+            <div style="text-align: center; margin-bottom: 24px;">
+              <a href="https://bravosbrasil.com.br/catalogo" style="display: inline-block; background: #00843D; color: #FFCC29; text-decoration: none; font-size: 15px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; padding: 18px 40px; border-radius: 50px;">
+                USAR MEU DESCONTO →
+              </a>
+            </div>
+            <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">Bravos Brasil — Veste seus valores.</p>
+          </div>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.error('Erro ao enviar email de cupom:', err);
+  }
+}
+
 // ==================== ABANDONED CART EMAIL ====================
 
 export interface AbandonedCartEmailData {
