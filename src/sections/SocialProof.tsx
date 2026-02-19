@@ -19,17 +19,17 @@ const stats = [
     label: 'Estados Atendidos',
   },
   {
+    icon: Palette,
+    value: 100,
+    suffix: '%',
+    label: 'Estampas Exclusivas',
+  },
+  {
     icon: Flag,
     value: 0,
     suffix: '',
     label: 'Identidade em cada peça',
     textValue: 'VALORES QUE VESTEM',
-  },
-  {
-    icon: Palette,
-    value: 100,
-    suffix: '%',
-    label: 'Estampas Exclusivas',
   },
 ];
 
