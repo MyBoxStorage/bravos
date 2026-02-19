@@ -38,6 +38,11 @@ function ProductDialog({ product, isOpen, onClose }: ProductDialogProps) {
 
   if (!product) return null;
 
+  const colorOptions = getAvailableColors(product);
+  const currentImage = colorOptions.find((co) => co.id === selectedColor)?.image
+    ?? product.image
+    ?? undefined;
+
   const handleAddToCart = () => {
     if (!selectedSize || !selectedColor) {
       toast.error('Selecione o tamanho e a cor');
@@ -66,9 +71,9 @@ function ProductDialog({ product, isOpen, onClose }: ProductDialogProps) {
         
         <div className="grid md:grid-cols-2 gap-6">
           <img
-            src={product.image ?? undefined}
+            src={currentImage}
             alt={product.name}
-            className="w-full h-80 object-cover rounded-lg"
+            className="w-full h-80 object-cover rounded-lg transition-all duration-300"
           />
           
           <div className="space-y-4">
@@ -113,10 +118,7 @@ function ProductDialog({ product, isOpen, onClose }: ProductDialogProps) {
             </div>
             
             {/* Cores */}
-            {(() => {
-              const colorOptions = getAvailableColors(product);
-              if (!colorOptions.length) return null;
-              return (
+            {colorOptions.length > 0 && (
                 <div>
                   <Label className="font-body font-medium mb-2 block">Cor</Label>
                   <div className="flex flex-wrap gap-2 max-h-32 overflow-y-auto pr-1">
@@ -142,8 +144,7 @@ function ProductDialog({ product, isOpen, onClose }: ProductDialogProps) {
                     ))}
                   </div>
                 </div>
-              );
-            })()}
+            )}
             
             <Button
               onClick={handleAddToCart}
