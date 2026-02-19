@@ -176,6 +176,12 @@ export function GeradorEstampas() {
             <h2 className="text-2xl font-bold text-green-600 mb-2">
               CRIE SUA ESTAMPA EXCLUSIVA
             </h2>
+            <div className="flex items-center gap-2 mb-3">
+              <span className="inline-flex items-center gap-1 bg-amber-100 text-amber-700 border border-amber-300 text-xs font-medium px-2.5 py-1 rounded-full">
+                🧪 Fase Beta
+              </span>
+              <span className="text-xs text-gray-400">Resultados podem variar. Estamos melhorando continuamente.</span>
+            </div>
             <p className="text-gray-600 text-sm mb-6">
               Personalize com Inteligência Artificial
             </p>
