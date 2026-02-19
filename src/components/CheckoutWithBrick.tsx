@@ -71,7 +71,7 @@ export function CheckoutWithBrick({ isOpen, onClose }: CheckoutWithBrickProps) {
   const [isCreatingOrder, setIsCreatingOrder] = useState(false);
   const [couponCode, setCouponCode] = useState('');
   const [couponDiscount, setCouponDiscount] = useState(0);
-  const [couponType, setCouponType] = useState<'PERCENTAGE' | 'FIXED' | null>(null);
+  const [couponType, setCouponType] = useState<'PERCENTAGE' | 'FIXED' | 'FREE_SHIPPING' | null>(null);
   const [validatingCoupon, setValidatingCoupon] = useState(false);
   const [isBrickLoading, setIsBrickLoading] = useState(true);
 
@@ -175,13 +175,15 @@ export function CheckoutWithBrick({ isOpen, onClose }: CheckoutWithBrickProps) {
     0
   );
 
-  const calculateCouponDiscount = (): number => {
+  const getCouponDiscount = (): number => {
     if (couponDiscount === 0 || !couponType) return 0;
-    if (couponType === 'PERCENTAGE') {
-      return (subtotalFromCart * couponDiscount) / 100;
-    }
+    if (couponType === 'FREE_SHIPPING') return 0; // frete tratado separado
+    if (couponType === 'PERCENTAGE') return (subtotalFromCart * couponDiscount) / 100;
     return Math.min(couponDiscount, subtotalFromCart);
   };
+
+  const shippingCost =
+    couponType === 'FREE_SHIPPING' ? 0 : (orderData?.totals?.shippingCost ?? cart.shipping);
 
   const handleApplyCoupon = async () => {
     if (!couponCode.trim()) {
@@ -214,9 +216,11 @@ export function CheckoutWithBrick({ isOpen, onClose }: CheckoutWithBrickProps) {
       setCouponDiscount(data.coupon.value);
       setCouponType(data.coupon.type);
       toast.success(
-        data.coupon.type === 'PERCENTAGE'
-          ? `✅ Cupom aplicado! ${data.coupon.value}% de desconto`
-          : `✅ Cupom aplicado! R$ ${data.coupon.value.toFixed(2)} de desconto`
+        data.coupon.type === 'FREE_SHIPPING'
+          ? '✅ Cupom aplicado! Frete grátis'
+          : data.coupon.type === 'PERCENTAGE'
+            ? `✅ Cupom aplicado! ${data.coupon.value}% de desconto`
+            : `✅ Cupom aplicado! R$ ${data.coupon.value.toFixed(2)} de desconto`
       );
     } catch (error) {
       console.error('Error validating coupon:', error);
@@ -388,7 +392,10 @@ export function CheckoutWithBrick({ isOpen, onClose }: CheckoutWithBrickProps) {
           complement: parsedAddress.complement,
         },
         items: cartItems,
-        couponCode: couponDiscount > 0 ? couponCode.trim().toUpperCase() : undefined,
+        couponCode:
+          couponDiscount > 0 || couponType === 'FREE_SHIPPING'
+            ? couponCode.trim().toUpperCase()
+            : undefined,
       };
 
       if (import.meta.env.DEV) console.log('CheckoutWithBrick - Criando pedido no backend...', orderPayload);
@@ -889,13 +896,15 @@ export function CheckoutWithBrick({ isOpen, onClose }: CheckoutWithBrickProps) {
                   {validatingCoupon ? 'Validando...' : 'Aplicar'}
                 </Button>
               </div>
-              {couponDiscount > 0 && (
+              {(couponDiscount > 0 || couponType === 'FREE_SHIPPING') && (
                 <p className="text-green-600 text-sm mt-2">
                   ✅ Cupom &quot;{couponCode}&quot; aplicado:{' '}
-                  {couponType === 'PERCENTAGE'
-                    ? `${couponDiscount}%`
-                    : `R$ ${couponDiscount.toFixed(2)}`}{' '}
-                  de desconto
+                  {couponType === 'FREE_SHIPPING'
+                    ? 'Frete grátis'
+                    : couponType === 'PERCENTAGE'
+                      ? `${couponDiscount}%`
+                      : `R$ ${couponDiscount.toFixed(2)}`}{' '}
+                  {couponType !== 'FREE_SHIPPING' && 'de desconto'}
                 </p>
               )}
             </div>
@@ -912,28 +921,26 @@ export function CheckoutWithBrick({ isOpen, onClose }: CheckoutWithBrickProps) {
                   <span>-{formatPrice(orderData?.totals.discountTotal ?? cart.discount)}</span>
                 </div>
               )}
-              {calculateCouponDiscount() > 0 && (
+              {getCouponDiscount() > 0 && (
                 <div className="flex justify-between text-sm text-green-600">
                   <span>Desconto ({couponCode})</span>
-                  <span>- {formatPrice(calculateCouponDiscount())}</span>
+                  <span>- {formatPrice(getCouponDiscount())}</span>
                 </div>
               )}
               <div className="flex justify-between text-sm">
                 <span>Frete</span>
                 <span>
-                  {(orderData?.totals.shippingCost ?? cart.shipping) === 0
-                    ? 'Grátis'
-                    : formatPrice(orderData?.totals.shippingCost ?? cart.shipping)}
+                  {shippingCost === 0 ? 'Grátis' : formatPrice(shippingCost)}
                 </span>
               </div>
               <div className="flex justify-between font-display text-xl text-[#00843D] pt-2 border-t">
                 <span>TOTAL</span>
                 <span>
                   {formatPrice(
-                    orderData?.totals.total ??
+                    orderData?.totals?.total ??
                       Math.max(
                         0,
-                        cart.subtotal - cart.discount - calculateCouponDiscount() + cart.shipping
+                        cart.subtotal - cart.discount - getCouponDiscount() + shippingCost
                       )
                   )}
                 </span>

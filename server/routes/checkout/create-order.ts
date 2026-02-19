@@ -73,7 +73,8 @@ function calculateDiscountRate(itemCount: number): number {
 function calculateOrderTotals(
   items: Array<{ quantity: number; unitPrice: number }>,
   couponDiscountAmount: number = 0,
-  hasTestProducts: boolean = false
+  hasTestProducts: boolean = false,
+  freeShippingCoupon: boolean = false
 ) {
   // Calcular subtotal
   const subtotal = items.reduce((sum, item) => sum + (item.quantity * item.unitPrice), 0);
@@ -95,12 +96,13 @@ function calculateOrderTotals(
     subtotalAfterQuantityDiscount - effectiveCouponDiscount;
   const discountTotal = quantityDiscountTotal + effectiveCouponDiscount;
 
-  // Calcular frete (grátis para produtos de teste)
+  // Calcular frete (grátis para produtos de teste ou cupom FREE_SHIPPING)
   const FREE_SHIPPING_THRESHOLD = 200;
   const STANDARD_SHIPPING_COST = 15;
-  const shippingCost = hasTestProducts
-    ? 0
-    : (subtotalAfterDiscount > FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_SHIPPING_COST);
+  const shippingCost =
+    hasTestProducts || freeShippingCoupon
+      ? 0
+      : (subtotalAfterDiscount > FREE_SHIPPING_THRESHOLD ? 0 : STANDARD_SHIPPING_COST);
 
   // Calcular total
   const total = subtotalAfterDiscount + shippingCost;
@@ -143,6 +145,7 @@ export async function createOrder(req: Request, res: Response) {
     // Validar cupom no backend (não confiar no valor do cliente)
     let couponDiscountAmount = 0;
     let couponDiscountCode: string | null = null;
+    let freeShippingCoupon = false;
     if (couponCode && couponCode.trim()) {
       const normalizedCode = couponCode.trim().toUpperCase();
       const coupon = await prisma.coupon.findUnique({
@@ -163,17 +166,21 @@ export async function createOrder(req: Request, res: Response) {
 
       if (valid && coupon) {
         couponDiscountCode = normalizedCode;
-        const subtotal = items.reduce(
-          (sum, item) => sum + item.quantity * item.unitPrice,
-          0
-        );
-        const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
-        const qtyRate = calculateDiscountRate(itemCount);
-        const subtotalAfterQty = subtotal * (1 - qtyRate);
-        if (coupon.type === 'PERCENTAGE') {
-          couponDiscountAmount = (subtotalAfterQty * coupon.value) / 100;
+        if (coupon.type === 'FREE_SHIPPING') {
+          freeShippingCoupon = true;
         } else {
-          couponDiscountAmount = Math.min(coupon.value, subtotalAfterQty);
+          const subtotal = items.reduce(
+            (sum, item) => sum + item.quantity * item.unitPrice,
+            0
+          );
+          const itemCount = items.reduce((sum, item) => sum + item.quantity, 0);
+          const qtyRate = calculateDiscountRate(itemCount);
+          const subtotalAfterQty = subtotal * (1 - qtyRate);
+          if (coupon.type === 'PERCENTAGE') {
+            couponDiscountAmount = (subtotalAfterQty * coupon.value) / 100;
+          } else {
+            couponDiscountAmount = Math.min(coupon.value, subtotalAfterQty);
+          }
         }
       }
     }
@@ -228,7 +235,12 @@ export async function createOrder(req: Request, res: Response) {
     const hasTestProducts = products.some((p) => p.category === 'TESTES');
 
     // Calcular totals no backend (source of truth)
-    const totals = calculateOrderTotals(items, couponDiscountAmount, hasTestProducts);
+    const totals = calculateOrderTotals(
+      items,
+      couponDiscountAmount,
+      hasTestProducts,
+      freeShippingCoupon
+    );
 
     // Gerar external reference único
     const externalReference = `order_${randomUUID()}`;

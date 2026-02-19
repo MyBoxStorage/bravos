@@ -1,0 +1,2 @@
+-- AlterEnum
+ALTER TYPE "CouponType" ADD VALUE 'FREE_SHIPPING';

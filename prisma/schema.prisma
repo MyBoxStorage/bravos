@@ -270,6 +270,7 @@ model PromptTemplate {
 enum CouponType {
   PERCENTAGE
   FIXED
+  FREE_SHIPPING
 }
 
 model Coupon {
