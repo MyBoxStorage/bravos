@@ -45,6 +45,7 @@ import { validateCoupon } from './routes/coupons/validate.js';
 import { monitorStatus } from './routes/internal/monitor.js';
 import { reconcilePending } from './routes/internal/reconcile-pending.js';
 import { cancelAbandoned } from './routes/internal/cancel-abandoned.js';
+import { sendAbandonedCartEmails } from './routes/internal/abandoned-cart-email.js';
 import { createRateLimiter } from './utils/rateLimiter.js';
 import { validateProductionEnv, logEnvStatus } from './utils/env.js';
 import rateLimit from 'express-rate-limit';
@@ -114,6 +115,11 @@ const rateLimitReconcilePending = createRateLimiter({
 });
 const rateLimitCancelAbandoned = createRateLimiter({
   routeKey: 'internal:cancel-abandoned',
+  maxRequests: 5,
+  windowMs: WINDOW_MS,
+});
+const rateLimitAbandonedCartEmail = createRateLimiter({
+  routeKey: 'internal:abandoned-cart-email',
   maxRequests: 5,
   windowMs: WINDOW_MS,
 });
@@ -287,6 +293,12 @@ app.post(
   validateAdminToken,
   rateLimitCancelAbandoned,
   cancelAbandoned
+);
+app.post(
+  '/api/internal/abandoned-cart-email',
+  validateAdminToken,
+  rateLimitAbandonedCartEmail,
+  sendAbandonedCartEmails
 );
 
 const authLimiter = rateLimit({

@@ -1,0 +1,68 @@
+name: Abandoned Cart Email (Production)
+
+on:
+  schedule:
+    - cron: '30 * * * *'  # A cada hora, nos :30
+  workflow_dispatch:
+    inputs:
+      apply:
+        description: 'Apply (true) or dry-run (false)'
+        required: false
+        default: 'false'
+        type: string
+
+concurrency:
+  group: abandoned-cart-email-production
+  cancel-in-progress: false
+
+jobs:
+  send-abandoned-cart-emails:
+    runs-on: ubuntu-latest
+    timeout-minutes: 2
+    steps:
+      - name: Validate secrets
+        run: |
+          if [ -z "${{ secrets.MONITOR_API_URL }}" ]; then
+            echo "::error::MONITOR_API_URL secret is not configured."
+            exit 1
+          fi
+          if [ -z "${{ secrets.ADMIN_TOKEN }}" ]; then
+            echo "::error::ADMIN_TOKEN secret is not configured."
+            exit 1
+          fi
+          echo "Secrets configured"
+
+      - name: Send abandoned cart emails
+        env:
+          API_URL: ${{ secrets.MONITOR_API_URL }}
+          ADMIN_TOKEN: ${{ secrets.ADMIN_TOKEN }}
+        run: |
+          DRY_RUN=true
+          if [ "${{ github.event_name }}" = "schedule" ]; then
+            DRY_RUN="true"
+          else
+            if [ "${{ github.event.inputs.apply }}" = "true" ]; then
+              DRY_RUN="false"
+            fi
+          fi
+
+          echo "dryRun=$DRY_RUN"
+          resp=$(curl -s -w "\n%{http_code}" -X POST "$API_URL/api/internal/abandoned-cart-email" \
+            -H "Content-Type: application/json" \
+            -H "x-admin-token: $ADMIN_TOKEN" \
+            -d "{\"dryRun\":$DRY_RUN,\"olderThanMinutes\":60,\"limit\":50}")
+
+          body=$(echo "$resp" | head -n -1)
+          code=$(echo "$resp" | tail -n 1)
+
+          echo "Response status: $code"
+          echo "Response body: $body"
+
+          if [ "$code" != "200" ]; then
+            echo "::error::abandoned-cart-email returned $code. Body: $body"
+            exit 1
+          fi
+
+          FOUND=$(echo "$body" | grep -o '"found":[0-9]*' | grep -o '[0-9]*')
+          echo "Orders found: ${FOUND:-0}"
+          echo "ok (status 200)"

@@ -333,3 +333,91 @@ export async function sendOrderStatusEmail(data: OrderStatusEmailData) {
     console.error('Erro ao enviar email de status do pedido:', err);
   }
 }
+
+// ==================== ABANDONED CART EMAIL ====================
+
+export interface AbandonedCartEmailData {
+  name: string;
+  email: string;
+  orderId: string;
+  externalReference: string;
+  items: { name: string; color: string; size: string; quantity: number; unitPrice: number }[];
+  total: number;
+}
+
+export async function sendAbandonedCartEmail(data: AbandonedCartEmailData) {
+  if (!process.env.GMAIL_USER || !process.env.GMAIL_APP_PASSWORD) return;
+
+  const itemsHtml = data.items.map(item => `
+    <tr>
+      <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6;">
+        <p style="font-family: Arial, sans-serif; font-size: 14px; color: #111827; font-weight: bold; margin: 0 0 2px;">${item.name}</p>
+        <p style="font-family: Arial, sans-serif; font-size: 12px; color: #6b7280; margin: 0;">${[item.size, item.color].filter(Boolean).join(' · ')}</p>
+      </td>
+      <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; text-align: center; font-family: Arial, sans-serif; font-size: 14px; color: #374151;">${item.quantity}x</td>
+      <td style="padding: 10px 0; border-bottom: 1px solid #f3f4f6; text-align: right; font-family: Arial, sans-serif; font-size: 14px; color: #374151;">R$ ${(item.unitPrice * item.quantity).toFixed(2).replace('.', ',')}</td>
+    </tr>
+  `).join('');
+
+  try {
+    await transporter.sendMail({
+      from: `"Bravos Brasil" <${process.env.GMAIL_USER}>`,
+      to: data.email,
+      subject: `🛒 Você esqueceu algo — Bravos Brasil`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 560px; margin: 0 auto; background: #ffffff;">
+
+          <!-- Header -->
+          <div style="background: #00843D; padding: 40px 32px; text-align: center; border-radius: 12px 12px 0 0;">
+            <p style="color: #FFCC29; font-size: 11px; letter-spacing: 3px; text-transform: uppercase; margin: 0 0 8px; font-weight: bold;">SEU CARRINHO ESTÁ ESPERANDO</p>
+            <h1 style="color: #ffffff; font-size: 32px; margin: 0; letter-spacing: 4px; font-weight: 900;">BRAVOS BRASIL</h1>
+          </div>
+
+          <!-- Hero -->
+          <div style="background: #002776; padding: 28px 32px; text-align: center;">
+            <p style="font-size: 40px; margin: 0 0 8px;">🛒</p>
+            <h2 style="color: #ffffff; font-size: 22px; margin: 0 0 8px; font-weight: 700;">Olá, ${data.name.split(' ')[0]}!</h2>
+            <p style="color: rgba(255,255,255,0.75); font-size: 14px; margin: 0; line-height: 1.6;">Você deixou itens no carrinho.<br>Eles ainda estão reservados para você!</p>
+          </div>
+
+          <!-- Body -->
+          <div style="padding: 32px; border: 1px solid #e5e7eb; border-top: none; border-radius: 0 0 12px 12px;">
+
+            <!-- Itens -->
+            <h3 style="color: #00843D; font-size: 13px; text-transform: uppercase; letter-spacing: 1px; margin: 0 0 12px;">Itens no seu carrinho</h3>
+            <table style="width: 100%; border-collapse: collapse; margin-bottom: 20px;">
+              ${itemsHtml}
+            </table>
+
+            <!-- Total -->
+            <div style="background: #f9fafb; border-radius: 8px; padding: 16px; margin-bottom: 24px;">
+              <table style="width: 100%;"><tr>
+                <td style="font-family: Arial, sans-serif; font-size: 15px; font-weight: bold; color: #111827;">Total</td>
+                <td style="font-family: Arial, sans-serif; font-size: 18px; font-weight: bold; color: #00843D; text-align: right;">R$ ${data.total.toFixed(2).replace('.', ',')}</td>
+              </tr></table>
+            </div>
+
+            <!-- Urgência -->
+            <div style="background: #fef3c7; border: 1px solid #fcd34d; border-radius: 8px; padding: 12px 16px; margin-bottom: 24px; text-align: center;">
+              <p style="font-family: Arial, sans-serif; font-size: 13px; color: #92400e; margin: 0;">⏳ Seu pedido será cancelado automaticamente em <strong>24 horas</strong> se não for finalizado.</p>
+            </div>
+
+            <!-- CTA -->
+            <div style="text-align: center; margin-bottom: 24px;">
+              <a href="https://bravosbrasil.com.br/order?ref=${encodeURIComponent(data.externalReference)}" style="display: inline-block; background: #00843D; color: #FFCC29; text-decoration: none; font-size: 15px; font-weight: bold; letter-spacing: 2px; text-transform: uppercase; padding: 18px 40px; border-radius: 50px;">
+                FINALIZAR MINHA COMPRA →
+              </a>
+            </div>
+
+            <p style="color: #9ca3af; font-size: 12px; text-align: center; margin: 0;">
+              Dúvidas? Fale conosco via WhatsApp.<br>
+              Bravos Brasil — Veste seus valores.
+            </p>
+          </div>
+        </div>
+      `,
+    });
+  } catch (err) {
+    console.error('Erro ao enviar email de carrinho abandonado:', err);
+  }
+}
