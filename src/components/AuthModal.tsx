@@ -16,7 +16,12 @@ const signupSchema = loginSchema.extend({
   phone: z.string().optional(),
 });
 
+const verifySchema = z.object({
+  code: z.string().length(6, 'Código deve ter 6 dígitos').regex(/^\d+$/, 'Apenas números'),
+});
+
 type SignupFormData = z.infer<typeof signupSchema>;
+type VerifyFormData = z.infer<typeof verifySchema>;
 
 interface AuthModalProps {
   isOpen: boolean;
@@ -26,17 +31,18 @@ interface AuthModalProps {
 
 export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalProps) {
   const [mode, setMode] = useState<'login' | 'signup'>(defaultMode);
+  const [step, setStep] = useState<'form' | 'verify'>('form');
+  const [pendingVerifyUserId, setPendingVerifyUserId] = useState<string | null>(null);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
-  const { login, signup } = useAuth();
+  const { login, signup, verifyEmail } = useAuth();
 
-  const {
-    register,
-    handleSubmit,
-    formState: { errors },
-    reset,
-  } = useForm<SignupFormData>({
+  const form = useForm<SignupFormData>({
     resolver: zodResolver(mode === 'login' ? loginSchema : signupSchema),
+  });
+
+  const verifyForm = useForm<VerifyFormData>({
+    resolver: zodResolver(verifySchema),
   });
 
   const onSubmit = async (data: SignupFormData) => {
@@ -46,13 +52,39 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
     try {
       if (mode === 'login') {
         await login({ email: data.email, password: data.password });
+        form.reset();
+        onClose();
       } else {
-        await signup(data);
+        const result = await signup(data);
+        if (result.kind === 'verification_required') {
+          setPendingVerifyUserId(result.userId);
+          setStep('verify');
+          setError('');
+          return;
+        }
+        form.reset();
+        onClose();
       }
-      reset();
-      onClose();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : 'Erro ao autenticar');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const onVerifySubmit = async (data: VerifyFormData) => {
+    if (!pendingVerifyUserId) return;
+    setLoading(true);
+    setError('');
+
+    try {
+      await verifyEmail(pendingVerifyUserId, data.code);
+      verifyForm.reset();
+      setPendingVerifyUserId(null);
+      setStep('form');
+      onClose();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Código inválido ou expirado');
     } finally {
       setLoading(false);
     }
@@ -61,7 +93,17 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
   const toggleMode = () => {
     setMode(mode === 'login' ? 'signup' : 'login');
     setError('');
-    reset();
+    setStep('form');
+    setPendingVerifyUserId(null);
+    form.reset();
+    verifyForm.reset();
+  };
+
+  const backToForm = () => {
+    setStep('form');
+    setPendingVerifyUserId(null);
+    setError('');
+    verifyForm.reset();
   };
 
   useEffect(() => {
@@ -73,124 +115,180 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
     return () => { document.body.style.overflow = ''; };
   }, [isOpen]);
 
+  useEffect(() => {
+    if (!isOpen) {
+      setStep('form');
+      setPendingVerifyUserId(null);
+    }
+  }, [isOpen]);
+
   if (!isOpen) return null;
+
+  const inputBase = 'w-full px-3 py-2 border-2 border-gray-200 rounded-xl focus:border-[#00843D] focus:ring-0 font-body';
+  const labelBase = 'block text-sm font-medium text-gray-700 mb-1 font-body';
 
   return createPortal(
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
-      <div className="bg-white rounded-lg max-w-md w-full p-6 relative max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-xl max-w-md w-full p-6 relative max-h-[90vh] overflow-y-auto border border-gray-100 shadow-xl">
         <button
-          onClick={onClose}
-          className="absolute top-4 right-4 text-gray-400 hover:text-gray-600"
+          onClick={step === 'verify' ? backToForm : onClose}
+          className="absolute top-4 right-4 text-gray-400 hover:text-[#00843D] transition-colors"
           type="button"
-          aria-label="Fechar"
+          aria-label={step === 'verify' ? 'Voltar' : 'Fechar'}
         >
           <X size={24} />
         </button>
 
-        <h2 className="text-2xl font-bold mb-6">
-          {mode === 'login' ? 'Entrar' : 'Criar Conta'}
-        </h2>
-
-        {mode === 'signup' && (
-          <div className="bg-green-50 border border-green-200 rounded-lg p-4 mb-6">
-            <p className="text-green-800 text-sm font-medium">
-              🎁 Ganhe 5 créditos grátis ao criar sua conta!
+        {step === 'verify' ? (
+          <>
+            <h2 className="font-display text-2xl text-[#00843D] mb-2">
+              Confirme seu e-mail
+            </h2>
+            <p className="font-body text-gray-600 text-sm mb-6">
+              Enviamos um código de 6 dígitos para o seu e-mail. Digite abaixo:
             </p>
-            <p className="text-green-600 text-xs mt-1">
-              Use para gerar suas próprias estampas com IA
-            </p>
-          </div>
-        )}
 
-        <form onSubmit={handleSubmit(onSubmit)} className="space-y-4">
-          {mode === 'signup' && (
-            <>
+            <form onSubmit={verifyForm.handleSubmit(onVerifySubmit)} className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Nome (opcional)
-                </label>
+                <label className={labelBase}>Código</label>
                 <input
                   type="text"
-                  {...register('name')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="Seu nome"
+                  inputMode="numeric"
+                  maxLength={6}
+                  placeholder="000000"
+                  className={`${inputBase} text-center text-2xl tracking-[0.5em]`}
+                  {...verifyForm.register('code')}
                 />
+                {verifyForm.formState.errors.code && (
+                  <p className="text-red-500 text-xs mt-1 font-body">
+                    {verifyForm.formState.errors.code.message}
+                  </p>
+                )}
+              </div>
+
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-3">
+                  <p className="text-red-600 text-sm font-body">{error}</p>
+                </div>
+              )}
+
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-[#00843D] hover:bg-[#006633] text-white py-3 rounded-full font-display text-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-[1.02]"
+              >
+                {loading ? 'Verificando...' : 'Confirmar'}
+              </button>
+            </form>
+
+            <button
+              type="button"
+              onClick={backToForm}
+              className="mt-4 w-full text-[#00843D] hover:text-[#006633] text-sm font-body font-medium"
+            >
+              ← Voltar ao cadastro
+            </button>
+          </>
+        ) : (
+          <>
+            <h2 className="font-display text-2xl text-[#00843D] mb-6">
+              {mode === 'login' ? 'Entrar' : 'Criar Conta'}
+            </h2>
+
+            {mode === 'signup' && (
+              <div className="bg-[#00843D]/5 border border-[#00843D]/20 rounded-xl p-4 mb-6">
+                <p className="text-[#00843D] text-sm font-medium font-body">
+                  🎁 Ganhe 5 créditos grátis após confirmar seu e-mail!
+                </p>
+                <p className="text-[#00843D]/80 text-xs mt-1 font-body">
+                  Use para gerar suas próprias estampas com IA
+                </p>
+              </div>
+            )}
+
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
+              {mode === 'signup' && (
+                <>
+                  <div>
+                    <label className={labelBase}>Nome (opcional)</label>
+                    <input
+                      type="text"
+                      {...form.register('name')}
+                      className={inputBase}
+                      placeholder="Seu nome"
+                    />
+                  </div>
+
+                  <div>
+                    <label className={labelBase}>Telefone (opcional)</label>
+                    <input
+                      type="tel"
+                      {...form.register('phone')}
+                      className={inputBase}
+                      placeholder="(00) 00000-0000"
+                    />
+                  </div>
+                </>
+              )}
+
+              <div>
+                <label className={labelBase}>Email</label>
+                <input
+                  type="email"
+                  {...form.register('email')}
+                  className={inputBase}
+                  placeholder="seu@email.com"
+                />
+                {form.formState.errors.email && (
+                  <p className="text-red-500 text-xs mt-1 font-body">{form.formState.errors.email.message}</p>
+                )}
               </div>
 
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Telefone (opcional)
-                </label>
+                <label className={labelBase}>Senha</label>
                 <input
-                  type="tel"
-                  {...register('phone')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  placeholder="(00) 00000-0000"
+                  type="password"
+                  {...form.register('password')}
+                  className={inputBase}
+                  placeholder="••••••••"
                 />
+                {form.formState.errors.password && (
+                  <p className="text-red-500 text-xs mt-1 font-body">{form.formState.errors.password.message}</p>
+                )}
               </div>
-            </>
-          )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Email
-            </label>
-            <input
-              type="email"
-              {...register('email')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              placeholder="seu@email.com"
-            />
-            {errors.email && (
-              <p className="text-red-500 text-xs mt-1">{errors.email.message}</p>
-            )}
-          </div>
+              {error && (
+                <div className="bg-red-50 border border-red-200 rounded-xl p-3">
+                  <p className="text-red-600 text-sm font-body">{error}</p>
+                </div>
+              )}
 
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Senha
-            </label>
-            <input
-              type="password"
-              {...register('password')}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-green-500 focus:border-transparent"
-              placeholder="••••••••"
-            />
-            {errors.password && (
-              <p className="text-red-500 text-xs mt-1">{errors.password.message}</p>
-            )}
-          </div>
+              <button
+                type="submit"
+                disabled={loading}
+                className="w-full bg-[#00843D] hover:bg-[#006633] text-white py-3 rounded-full font-display text-lg disabled:opacity-50 disabled:cursor-not-allowed transition-all hover:scale-[1.02]"
+              >
+                {loading
+                  ? 'Carregando...'
+                  : mode === 'login'
+                    ? 'Entrar'
+                    : 'Criar Conta'}
+              </button>
+            </form>
 
-          {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3">
-              <p className="text-red-600 text-sm">{error}</p>
+            <div className="mt-6 text-center">
+              <button
+                onClick={toggleMode}
+                type="button"
+                className="text-[#00843D] hover:text-[#006633] text-sm font-medium font-body"
+              >
+                {mode === 'login'
+                  ? 'Não tem conta? Cadastre-se'
+                  : 'Já tem conta? Entre'}
+              </button>
             </div>
-          )}
-
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full bg-green-600 text-white py-3 rounded-lg font-semibold hover:bg-green-700 disabled:opacity-50 disabled:cursor-not-allowed transition"
-          >
-            {loading
-              ? 'Carregando...'
-              : mode === 'login'
-                ? 'Entrar'
-                : 'Criar Conta'}
-          </button>
-        </form>
-
-        <div className="mt-6 text-center">
-          <button
-            onClick={toggleMode}
-            type="button"
-            className="text-green-600 hover:text-green-700 text-sm font-medium"
-          >
-            {mode === 'login'
-              ? 'Não tem conta? Cadastre-se'
-              : 'Já tem conta? Entre'}
-          </button>
-        </div>
+          </>
+        )}
       </div>
     </div>,
     document.body

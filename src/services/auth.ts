@@ -16,6 +16,15 @@ export interface AuthResponse {
   user: AuthUser;
 }
 
+export interface VerificationRequiredResponse {
+  success: true;
+  requiresVerification: true;
+  userId: string;
+  message: string;
+}
+
+export type SignupResult = AuthResponse | VerificationRequiredResponse;
+
 export interface LoginInput {
   email: string;
   password: string;
@@ -29,7 +38,7 @@ export interface SignupInput {
 }
 
 export const authService = {
-  async signup(data: SignupInput): Promise<AuthResponse> {
+  async signup(data: SignupInput): Promise<SignupResult> {
     const res = await fetch(`${API_URL}/api/auth/signup`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -38,7 +47,24 @@ export const authService = {
 
     if (!res.ok) {
       const error = await res.json().catch(() => ({}));
-      throw new Error((error as { error?: string }).error || 'Erro ao criar conta');
+      const err = error as { message?: string; error?: string };
+      throw new Error(err.message || err.error || 'Erro ao criar conta');
+    }
+
+    return res.json() as Promise<SignupResult>;
+  },
+
+  async verifyEmail(userId: string, token: string): Promise<AuthResponse> {
+    const res = await fetch(`${API_URL}/api/auth/verify-email`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, token }),
+    });
+
+    if (!res.ok) {
+      const error = await res.json().catch(() => ({}));
+      const err = error as { message?: string; error?: string };
+      throw new Error(err.message || err.error || 'Código inválido ou expirado');
     }
 
     return res.json();

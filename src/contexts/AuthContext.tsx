@@ -6,14 +6,19 @@ import {
   useCallback,
   type ReactNode,
 } from 'react';
-import { authService, type AuthUser, type LoginInput, type SignupInput } from '../services/auth';
+import { authService, type AuthUser, type AuthResponse, type LoginInput, type SignupInput } from '../services/auth';
+
+export type SignupOutcome =
+  | { kind: 'logged_in' }
+  | { kind: 'verification_required'; userId: string };
 
 interface AuthContextType {
   user: AuthUser | null;
   token: string | null;
   isLoading: boolean;
   login: (data: LoginInput) => Promise<void>;
-  signup: (data: SignupInput) => Promise<void>;
+  signup: (data: SignupInput) => Promise<SignupOutcome>;
+  verifyEmail: (userId: string, code: string) => Promise<void>;
   logout: () => void;
   refreshUser: () => Promise<void>;
 }
@@ -58,8 +63,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(response.user);
   };
 
-  const signup = async (data: SignupInput) => {
+  const signup = async (data: SignupInput): Promise<SignupOutcome> => {
     const response = await authService.signup(data);
+    if ('requiresVerification' in response && response.requiresVerification) {
+      return { kind: 'verification_required', userId: response.userId };
+    }
+    const auth = response as AuthResponse;
+    authService.saveToken(auth.token);
+    setToken(auth.token);
+    setUser(auth.user);
+    return { kind: 'logged_in' };
+  };
+
+  const verifyEmail = async (userId: string, code: string) => {
+    const response = await authService.verifyEmail(userId, code);
     authService.saveToken(response.token);
     setToken(response.token);
     setUser(response.user);
@@ -84,7 +101,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   return (
     <AuthContext.Provider
-      value={{ user, token, isLoading, login, signup, logout, refreshUser }}
+      value={{ user, token, isLoading, login, signup, verifyEmail, logout, refreshUser }}
     >
       {children}
     </AuthContext.Provider>
