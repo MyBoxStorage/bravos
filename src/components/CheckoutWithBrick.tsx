@@ -497,6 +497,7 @@ export function CheckoutWithBrick({ isOpen, onClose }: CheckoutWithBrickProps) {
               }),
             },
             external_reference: orderData.externalReference,
+            ...(data.formData?.device_id && { device_id: data.formData.device_id }),
           };
 
           console.log('📤 Enviando para /api/mp/process-card-payment:', cardPaymentPayload);

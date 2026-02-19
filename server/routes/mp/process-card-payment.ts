@@ -41,6 +41,7 @@ const processCardPaymentSchema = z.object({
     }).optional(),
   }),
   external_reference: z.string().min(1, 'External reference é obrigatório'),
+  device_id: z.string().optional(),
 });
 
 export async function processCardPayment(req: Request, res: Response) {
@@ -63,6 +64,7 @@ export async function processCardPayment(req: Request, res: Response) {
       transaction_amount,
       payer,
       external_reference,
+      device_id,
     } = validationResult.data;
 
     // Verificar Access Token
@@ -72,17 +74,17 @@ export async function processCardPayment(req: Request, res: Response) {
       return sendError(res, req, 500, 'SERVER_CONFIG_ERROR', 'Mercado Pago access token not configured');
     }
 
-    // Buscar o pedido existente pelo external_reference
+    // Buscar o pedido existente pelo external_reference (com items e endereço para additional_info)
     const order = await prisma.order.findUnique({
       where: { externalReference: external_reference },
-      select: {
-        id: true,
-        total: true,
-        status: true,
-        mpPaymentId: true,
-        externalReference: true,
-        payerEmail: true,
-        payerName: true,
+      include: {
+        items: {
+          include: {
+            product: {
+              select: { name: true, description: true, image: true },
+            },
+          },
+        },
       },
     });
 
@@ -112,6 +114,8 @@ export async function processCardPayment(req: Request, res: Response) {
       return sendError(res, req, 400, 'AMOUNT_MISMATCH', 'O valor do pagamento não confere com o pedido.');
     }
 
+    const frontendUrl = process.env.FRONTEND_URL || 'https://bravosbrasil.com.br';
+
     // Preparar payload para a API do Mercado Pago
     const mpPaymentData: Record<string, unknown> = {
       token,
@@ -131,9 +135,43 @@ export async function processCardPayment(req: Request, res: Response) {
       external_reference,
       description: `Pedido BRAVOS BRASIL - ${external_reference}`,
       statement_descriptor: 'BRAVOS BRASIL',
+      ...(device_id && { device_id }),
       notification_url: process.env.BACKEND_URL
         ? `${process.env.BACKEND_URL}/api/mp/webhooks`
         : undefined,
+      additional_info: {
+        items: order.items.map((item) => ({
+          id: item.productId,
+          title: item.product?.name || `Produto ${item.productId}`,
+          description: item.product?.description || item.product?.name || 'Camiseta patriótica Bravos Brasil',
+          category_id: 'fashion',
+          quantity: item.quantity,
+          unit_price: item.unitPrice,
+          picture_url: item.product?.image
+            ? (item.product.image.startsWith('http') ? item.product.image : `${frontendUrl}${item.product.image}`)
+            : undefined,
+        })),
+        payer: {
+          first_name: (order.payerName || 'Cliente').split(' ')[0],
+          last_name: (order.payerName || '').split(' ').slice(1).join(' ') || '',
+          ...(order.payerPhone && {
+            phone: {
+              area_code: order.payerPhone.replace(/\D/g, '').substring(0, 2),
+              number: order.payerPhone.replace(/\D/g, '').substring(2),
+            },
+          }),
+        },
+        ...(order.shippingCost && order.shippingCost > 0 && {
+          shipments: {
+            receiver_address: {
+              zip_code: order.shippingCep || '',
+              street_name: order.shippingAddress1 || '',
+              city_name: order.shippingCity || '',
+              state_name: order.shippingState || '',
+            },
+          },
+        }),
+      },
     };
 
     logger.info('Creating card payment in Mercado Pago', {
