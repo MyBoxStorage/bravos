@@ -17,8 +17,8 @@ const quickLinks = [
 const supportLinks = [
   { name: 'FAQ', href: '/#faq' },
   { name: 'Trocas e devoluções', href: '/trocas-e-devolucoes', isRoute: true },
-  { name: 'Política de privacidade', href: '/politica-de-privacidade' },
-  { name: 'Termos de uso', href: '/termos-de-uso' },
+  { name: 'Política de privacidade', href: '/politica-de-privacidade', isRoute: true },
+  { name: 'Termos de uso', href: '/termos-de-uso', isRoute: true },
   { name: 'Rastreamento de pedido', href: '/order', isRoute: true },
 ];
 

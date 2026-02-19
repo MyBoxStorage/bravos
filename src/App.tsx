@@ -13,6 +13,8 @@ import { MinhasEstampasPage } from "@/pages/MinhasEstampasPage";
 import { CatalogPage } from "@/pages/CatalogPage";
 import ProductPage from "@/pages/ProductPage";
 import PoliticaTrocas from "@/pages/PoliticaTrocas";
+import PoliticaPrivacidade from "@/pages/PoliticaPrivacidade";
+import TermosDeUso from "@/pages/TermosDeUso";
 
 // Admin — lazy loaded to avoid Supabase env crash in production
 const AdminUnifiedPage = lazy(() =>
@@ -47,6 +49,8 @@ function App() {
           }
         />
         <Route path="/trocas-e-devolucoes" element={<PoliticaTrocas />} />
+        <Route path="/politica-de-privacidade" element={<PoliticaPrivacidade />} />
+        <Route path="/termos-de-uso" element={<TermosDeUso />} />
         <Route path="/minhas-estampas" element={<MinhasEstampasPage />} />
         </Routes>
       </BrowserRouter>
