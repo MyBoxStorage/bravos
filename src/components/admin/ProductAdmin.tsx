@@ -24,6 +24,7 @@ import {
   adminGetProduct,
   adminCreateProduct,
   adminUpdateProduct,
+  adminDeleteProduct,
   adminUploadImage,
   adminGetCatalogHealth,
   type AdminProductSummary,
@@ -1208,9 +1209,25 @@ export default function ProductAdmin({ onLogout }: ProductAdminProps) {
     setRestoredFromDraft(false);
   };
 
-  const handleDelete = (id: string) => {
-    setProducts((prev) => prev.filter((p) => p.id !== id));
-    showToast('Produto removido');
+  const handleDelete = async (id: string) => {
+    if (!window.confirm('Tem certeza que deseja remover este produto?')) return;
+    try {
+      const token = getToken();
+      if (!token) {
+        showToast('Token de admin não encontrado.');
+        return;
+      }
+      const result = await adminDeleteProduct(token, id);
+      if (result.action === 'archived') {
+        showToast('Produto arquivado (possui pedidos vinculados)');
+      } else {
+        showToast('Produto removido com sucesso');
+      }
+      await loadProducts();
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao remover produto';
+      showToast(message);
+    }
   };
 
 

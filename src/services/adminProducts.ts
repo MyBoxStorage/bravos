@@ -3,6 +3,7 @@
  * All calls require x-admin-token
  */
 
+import { API_URL } from '@/config/api';
 import { getJSON, postJSON, putJSON, uploadFile } from '@/services/api';
 
 // ── Types ───────────────────────────────────────────────────────────────────
@@ -142,6 +143,21 @@ export async function adminUpdateProduct(
     payload,
     { headers: authHeaders(token) },
   );
+}
+
+export async function adminDeleteProduct(
+  token: string,
+  id: string,
+): Promise<{ ok: boolean; action: string; message?: string }> {
+  const res = await fetch(`${API_URL}/api/admin/products/${encodeURIComponent(id)}`, {
+    method: 'DELETE',
+    headers: authHeaders(token),
+  });
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({})) as { error?: string };
+    throw new Error(err.error || 'Erro ao remover produto');
+  }
+  return res.json();
 }
 
 /**

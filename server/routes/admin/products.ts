@@ -380,3 +380,45 @@ export async function updateAdminProduct(req: Request, res: Response) {
     return sendError(res, req, 500, 'INTERNAL_ERROR', 'Erro ao atualizar produto.');
   }
 }
+
+// ── DELETE /api/admin/products/:id ───────────────────────────────────────────
+
+export async function deleteAdminProduct(req: Request, res: Response) {
+  try {
+    const rawId = req.params.id;
+    const id = typeof rawId === 'string' ? rawId.trim() : '';
+    if (!id) return sendError(res, req, 400, 'VALIDATION_ERROR', 'ID obrigatório.');
+
+    const existing = await prisma.product.findUnique({ where: { id }, select: { id: true } });
+    if (!existing) {
+      return sendError(res, req, 404, 'NOT_FOUND', 'Produto não encontrado.');
+    }
+
+    const orderItems = await prisma.orderItem.findFirst({
+      where: { productId: id },
+    });
+
+    if (orderItems) {
+      await prisma.product.update({
+        where: { id },
+        data: { category: 'TESTES' },
+      });
+      return res.json({
+        ok: true,
+        action: 'archived',
+        message: 'Produto arquivado (possui pedidos vinculados)',
+      });
+    }
+
+    await prisma.product.delete({ where: { id } });
+    logger.info(`Product deleted: ${id}`);
+    return res.json({ ok: true, action: 'deleted' });
+  } catch (err: unknown) {
+    if (err && typeof err === 'object' && 'code' in err && (err as { code: string }).code === 'P2025') {
+      return sendError(res, req, 404, 'NOT_FOUND', 'Produto não encontrado.');
+    }
+    const msg = err instanceof Error ? err.message : 'Unknown error';
+    logger.error(`deleteAdminProduct: ${msg}`);
+    return sendError(res, req, 500, 'INTERNAL_ERROR', 'Erro ao remover produto.');
+  }
+}
