@@ -344,7 +344,7 @@ export async function updateAdminProduct(req: Request, res: Response) {
     }
 
     // SEO fields: auto-generate if metaTitle not provided by admin
-    if (body.metaTitle !== undefined) {
+    if (body.metaTitle !== undefined && body.metaTitle !== '') {
       data.metaTitle = body.metaTitle;
       data.metaDescription = body.metaDescription ?? '';
       data.seoTags = body.seoTags ?? [];
