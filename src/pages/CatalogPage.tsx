@@ -365,28 +365,34 @@ function ProductCard({
           className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
         />
 
-        {/* Botão toggle masculino/feminino — só aparece em mobile (touch). Em desktop o hover já faz o toggle */}
+        {/* Botões toggle masculino/feminino — laterais, só mobile. Desktop: hover faz o toggle */}
         {hasBothGenders && (
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              handleToggleGender();
-            }}
-            aria-label={`Ver modelo ${currentGender === 'masculino' ? 'feminino' : 'masculino'}`}
-            className="md:hidden absolute bottom-2 left-2 flex items-center gap-1 bg-black/60 backdrop-blur-sm text-white text-xs font-medium px-2 py-1 rounded-full transition-opacity"
-          >
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              width="12"
-              height="12"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              aria-hidden="true"
-            >
-              <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
-            </svg>
-            {currentGender === 'masculino' ? 'Ver feminino' : 'Ver masculino'}
-          </button>
+          <>
+            {currentGender === 'feminino' && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleGender();
+                }}
+                aria-label="Ver modelo masculino"
+                className="md:hidden absolute left-1 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center bg-black/50 backdrop-blur-sm text-white rounded-full text-xs font-bold leading-none"
+              >
+                ♂
+              </button>
+            )}
+            {currentGender === 'masculino' && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleGender();
+                }}
+                aria-label="Ver modelo feminino"
+                className="md:hidden absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center bg-black/50 backdrop-blur-sm text-white rounded-full text-xs font-bold leading-none"
+              >
+                ♀
+              </button>
+            )}
+          </>
         )}
 
         {/* Badges */}
