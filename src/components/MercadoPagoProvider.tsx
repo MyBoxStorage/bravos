@@ -38,10 +38,12 @@ export function MercadoPagoProvider({ children }: MercadoPagoProviderProps) {
     }
 
     if (!publicKey) {
-      console.error(
-        '❌ VITE_MERCADOPAGO_PUBLIC_KEY não está configurado. ' +
-        'Adicione a Public Key no arquivo .env'
-      );
+      if (import.meta.env.DEV) {
+        console.error(
+          '❌ VITE_MERCADOPAGO_PUBLIC_KEY não está configurado. ' +
+          'Adicione a Public Key no arquivo .env'
+        );
+      }
       return;
     }
 

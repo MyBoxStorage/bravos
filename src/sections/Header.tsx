@@ -9,6 +9,7 @@ import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { CheckoutWithBrick } from '@/components/CheckoutWithBrick';
+import { MercadoPagoProvider } from '@/components/MercadoPagoProvider';
 import { TrustBadges } from '@/components/TrustBadges';
 
 const navLinks = [
@@ -371,11 +372,13 @@ export function Header() {
         defaultMode="login"
       />
 
-      {/* Checkout Dialog com Payment Brick */}
-      <CheckoutWithBrick
-        isOpen={isCheckoutOpen}
-        onClose={() => setIsCheckoutOpen(false)}
-      />
+      {/* Checkout Dialog com Payment Brick — SDK MP só aqui */}
+      <MercadoPagoProvider>
+        <CheckoutWithBrick
+          isOpen={isCheckoutOpen}
+          onClose={() => setIsCheckoutOpen(false)}
+        />
+      </MercadoPagoProvider>
     </header>
   );
 }

@@ -39,7 +39,6 @@ import { Header } from '@/sections/Header';
 import { Footer } from '@/sections/Footer';
 import { FloatingWhatsApp } from '@/components/FloatingWhatsApp';
 import { CartProvider } from '@/hooks/useCart';
-import { MercadoPagoProvider } from '@/components/MercadoPagoProvider';
 import { Toaster } from '@/components/ui/sonner';
 import type { Product, Category, Size, Color, Gender, SortOption } from '@/types';
 import { JsonLd } from '@/components/JsonLd';
@@ -945,11 +944,9 @@ function CatalogContent() {
    ══════════════════════════════════════════════════════════ */
 export function CatalogPage() {
   return (
-    <MercadoPagoProvider>
-      <CartProvider>
-        <CatalogContent />
-        <Toaster position="bottom-right" richColors />
-      </CartProvider>
-    </MercadoPagoProvider>
+    <CartProvider>
+      <CatalogContent />
+      <Toaster position="bottom-right" richColors />
+    </CartProvider>
   );
 }

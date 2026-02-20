@@ -21,7 +21,6 @@ import { Footer } from '@/sections/Footer';
 import { TrustBadges } from '@/components/TrustBadges';
 import { FloatingWhatsApp } from '@/components/FloatingWhatsApp';
 import { CartProvider, useCart } from '@/hooks/useCart';
-import { MercadoPagoProvider } from '@/components/MercadoPagoProvider';
 import { Toaster } from '@/components/ui/sonner';
 import { toast } from 'sonner';
 import { fetchCatalogProductBySlug } from '@/services/catalog';
@@ -705,11 +704,9 @@ function ProductContent() {
    ══════════════════════════════════════════════════════════ */
 export default function ProductPage() {
   return (
-    <MercadoPagoProvider>
-      <CartProvider>
-        <ProductContent />
-        <Toaster position="bottom-right" richColors />
-      </CartProvider>
-    </MercadoPagoProvider>
+    <CartProvider>
+      <ProductContent />
+      <Toaster position="bottom-right" richColors />
+    </CartProvider>
   );
 }
