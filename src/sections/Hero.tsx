@@ -1,4 +1,5 @@
 import { useEffect, useRef } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { gsap } from 'gsap';
 import { ScrollTrigger } from 'gsap/ScrollTrigger';
 import { ArrowDown, Sparkles } from 'lucide-react';
@@ -7,6 +8,7 @@ import { Button } from '@/components/ui/button';
 gsap.registerPlugin(ScrollTrigger);
 
 export function Hero() {
+  const navigate = useNavigate();
   const sectionRef = useRef<HTMLElement>(null);
   const titleRef = useRef<HTMLHeadingElement>(null);
   const badgeRef = useRef<HTMLDivElement>(null);
@@ -141,7 +143,7 @@ export function Hero() {
         <div ref={ctaRef} className="flex flex-col sm:flex-row gap-4">
           <Button
             size="lg"
-            onClick={() => scrollToSection('#featured')}
+            onClick={() => navigate('/catalogo')}
             className="bg-gradient-green-yellow text-[#002776] hover:opacity-90 font-display text-lg px-8 py-6 rounded-full transition-all hover:scale-105 hover:shadow-xl"
           >
             VER COLEÇÃO COMPLETA
