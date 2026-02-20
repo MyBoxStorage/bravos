@@ -341,8 +341,8 @@ export function Header() {
                   <Link
                     to="/minha-conta"
                     onClick={() => setIsMobileMenuOpen(false)}
-                    className={`font-body text-sm font-medium tracking-wider py-2 transition-colors font-semibold ${
-                      isScrolled ? 'text-[#00843D]' : 'text-[#FFCC29]'
+                    className={`font-body text-sm font-medium tracking-wider py-2 transition-colors font-semibold hover:text-[#00843D] ${
+                      isScrolled || isMobileMenuOpen ? 'text-[#00843D]' : 'text-[#FFCC29]'
                     }`}
                   >
                     Minha Conta
@@ -354,8 +354,8 @@ export function Header() {
                   key={link.name}
                   to={link.href}
                   onClick={() => setIsMobileMenuOpen(false)}
-                  className={`font-body text-sm font-medium tracking-wider py-2 transition-colors ${
-                    isScrolled ? 'text-gray-800' : 'text-white'
+                  className={`font-body text-sm font-medium tracking-wider py-2 transition-colors hover:text-[#00843D] ${
+                    isScrolled || isMobileMenuOpen ? 'text-gray-800' : 'text-[#FFCC29]'
                   }`}
                 >
                   {link.name}
