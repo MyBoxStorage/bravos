@@ -36,7 +36,6 @@ import {
 import { categories, sizes, colors } from '@/data/products';
 import { useCatalogProducts } from '@/hooks/useCatalogProducts';
 import { Header } from '@/sections/Header';
-import { MercadoPagoProvider } from '@/components/MercadoPagoProvider';
 import { Footer } from '@/sections/Footer';
 import { FloatingWhatsApp } from '@/components/FloatingWhatsApp';
 import { CartProvider } from '@/hooks/useCart';

@@ -18,7 +18,6 @@ import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group';
 import { Header } from '@/sections/Header';
 import { ProductHero } from '@/sections/ProductHero';
 import { Footer } from '@/sections/Footer';
-import { MercadoPagoProvider } from '@/components/MercadoPagoProvider';
 import { TrustBadges } from '@/components/TrustBadges';
 import { FloatingWhatsApp } from '@/components/FloatingWhatsApp';
 import { CartProvider, useCart } from '@/hooks/useCart';

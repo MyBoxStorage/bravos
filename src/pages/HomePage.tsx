@@ -1,4 +1,3 @@
-import { MercadoPagoProvider } from '@/components/MercadoPagoProvider';
 import { CartProvider } from '@/hooks/useCart';
 import { Toaster } from '@/components/ui/sonner';
 import { Header } from '@/sections/Header';
@@ -145,9 +144,8 @@ export default function HomePage() {
           </main>
           <Footer />
           <FloatingWhatsApp />
-    </MercadoPagoProvider>
-        </div>
-        <Toaster position="bottom-right" richColors />
-      </CartProvider>
+      </div>
+      <Toaster position="bottom-right" richColors />
+    </CartProvider>
   );
 }

@@ -78,6 +78,34 @@ export function CheckoutWithBrick({ isOpen, onClose }: CheckoutWithBrickProps) {
   // ── Pending checkout recovery state ──────────────────────────────────────
   const [pendingRecovery, setPendingRecovery] = useState<PendingCheckoutV1 | null>(null);
 
+  // Carrega o security.js do Mercado Pago apenas quando o modal de checkout
+  // é montado. A doc oficial diz que o script é obrigatório só na página de
+  // checkout — carregar globalmente causava 635ms de long task em todas as
+  // páginas, incluindo catálogo e home.
+  // Referência: https://www.mercadopago.com.br/developers/pt/docs/checkout-bricks/additional-content/best-practices/improve-approval
+  useEffect(() => {
+    const existingScript = document.querySelector(
+      'script[src*="mercadopago.com/v2/security.js"]'
+    );
+
+    if (existingScript) return;
+
+    const script = document.createElement('script');
+    script.src = 'https://www.mercadopago.com/v2/security.js';
+    script.setAttribute('view', 'checkout');
+    script.async = true;
+    document.body.appendChild(script);
+
+    return () => {
+      const scriptToRemove = document.querySelector(
+        'script[src*="mercadopago.com/v2/security.js"]'
+      );
+      if (scriptToRemove) {
+        document.body.removeChild(scriptToRemove);
+      }
+    };
+  }, []);
+
   // Detectar pending checkout válido sempre que o dialog abrir (e estiver na etapa do form)
   useEffect(() => {
     if (isOpen && !showPaymentBrick) {
