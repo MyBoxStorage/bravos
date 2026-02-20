@@ -93,6 +93,11 @@ export function Hero() {
         <img
           src="/hero-bg.jpg"
           alt="BRAVOS BRASIL"
+          fetchPriority="high"
+          loading="eager"
+          decoding="async"
+          width={1920}
+          height={1080}
           className="w-full h-full object-cover"
         />
         {/* Gradient Overlay */}

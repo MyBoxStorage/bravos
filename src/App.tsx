@@ -2,21 +2,27 @@ import { useEffect, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
 
-// Pages
-import HomePage from "@/pages/HomePage";
-import CheckoutSuccess from "@/pages/CheckoutSuccess";
-import CheckoutFailure from "@/pages/CheckoutFailure";
-import CheckoutPending from "@/pages/CheckoutPending";
-import OrderTracking from "@/pages/OrderTracking";
-import UserDashboard from "@/pages/UserDashboard";
-import { MinhasEstampasPage } from "@/pages/MinhasEstampasPage";
-import { CatalogPage } from "@/pages/CatalogPage";
-import ProductPage from "@/pages/ProductPage";
-import PoliticaTrocas from "@/pages/PoliticaTrocas";
-import PoliticaPrivacidade from "@/pages/PoliticaPrivacidade";
-import TermosDeUso from "@/pages/TermosDeUso";
-import Sobre from "@/pages/Sobre";
-import Contato from "@/pages/Contato";
+// Pages — lazy loaded for route-based code splitting
+const HomePage = lazy(() => import("@/pages/HomePage"));
+const CatalogPage = lazy(() =>
+  import("@/pages/CatalogPage").then((m) => ({ default: m.CatalogPage }))
+);
+const ProductPage = lazy(() => import("@/pages/ProductPage"));
+const UserDashboard = lazy(() => import("@/pages/UserDashboard"));
+const OrderTracking = lazy(() => import("@/pages/OrderTracking"));
+const CheckoutSuccess = lazy(() => import("@/pages/CheckoutSuccess"));
+const CheckoutFailure = lazy(() => import("@/pages/CheckoutFailure"));
+const CheckoutPending = lazy(() => import("@/pages/CheckoutPending"));
+const MinhasEstampasPage = lazy(() =>
+  import("@/pages/MinhasEstampasPage").then((m) => ({
+    default: m.MinhasEstampasPage,
+  }))
+);
+const PoliticaTrocas = lazy(() => import("@/pages/PoliticaTrocas"));
+const PoliticaPrivacidade = lazy(() => import("@/pages/PoliticaPrivacidade"));
+const TermosDeUso = lazy(() => import("@/pages/TermosDeUso"));
+const Sobre = lazy(() => import("@/pages/Sobre"));
+const Contato = lazy(() => import("@/pages/Contato"));
 
 // Admin — lazy loaded to avoid Supabase env crash in production
 const AdminUnifiedPage = lazy(() =>
@@ -33,30 +39,28 @@ function App() {
   return (
     <AuthProvider>
       <BrowserRouter>
-        <Routes>
-        <Route path="/catalogo" element={<CatalogPage />} />
-        <Route path="/produto/:slug" element={<ProductPage />} />
-        <Route path="/" element={<HomePage />} />
-        <Route path="/checkout/success" element={<CheckoutSuccess />} />
-        <Route path="/checkout/failure" element={<CheckoutFailure />} />
-        <Route path="/checkout/pending" element={<CheckoutPending />} />
-        <Route path="/minha-conta" element={<UserDashboard />} />
-        <Route path="/order" element={<OrderTracking />} />
-        <Route
-          path="/admin/*"
-          element={
-            <Suspense fallback={<div style={{ minHeight: '100vh', background: '#0a0a0a' }} />}>
-              <AdminUnifiedPage />
-            </Suspense>
-          }
-        />
-        <Route path="/trocas-e-devolucoes" element={<PoliticaTrocas />} />
-        <Route path="/politica-de-privacidade" element={<PoliticaPrivacidade />} />
-        <Route path="/termos-de-uso" element={<TermosDeUso />} />
-        <Route path="/sobre" element={<Sobre />} />
-        <Route path="/contato" element={<Contato />} />
-        <Route path="/minhas-estampas" element={<MinhasEstampasPage />} />
-        </Routes>
+        <Suspense fallback={<div className="min-h-screen bg-white" />}>
+          <Routes>
+            <Route path="/catalogo" element={<CatalogPage />} />
+            <Route path="/produto/:slug" element={<ProductPage />} />
+            <Route path="/" element={<HomePage />} />
+            <Route path="/checkout/success" element={<CheckoutSuccess />} />
+            <Route path="/checkout/failure" element={<CheckoutFailure />} />
+            <Route path="/checkout/pending" element={<CheckoutPending />} />
+            <Route path="/minha-conta" element={<UserDashboard />} />
+            <Route path="/order" element={<OrderTracking />} />
+            <Route path="/admin/*" element={<AdminUnifiedPage />} />
+            <Route path="/trocas-e-devolucoes" element={<PoliticaTrocas />} />
+            <Route
+              path="/politica-de-privacidade"
+              element={<PoliticaPrivacidade />}
+            />
+            <Route path="/termos-de-uso" element={<TermosDeUso />} />
+            <Route path="/sobre" element={<Sobre />} />
+            <Route path="/contato" element={<Contato />} />
+            <Route path="/minhas-estampas" element={<MinhasEstampasPage />} />
+          </Routes>
+        </Suspense>
       </BrowserRouter>
     </AuthProvider>
   );

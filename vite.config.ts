@@ -50,6 +50,8 @@ export default defineConfig({
           ],
           'vendor-gsap': ['gsap'],
           'vendor-mercadopago': ['@mercadopago/sdk-react'],
+          'vendor-recharts': ['recharts'],
+          'vendor-lucide': ['lucide-react'],
         },
       },
     },
