@@ -358,14 +358,36 @@ function ProductCard({
         <img
           src={currentImageUrl ?? undefined}
           alt={product.name}
-          // priority=true: primeiro card do grid (mobile 1 coluna). eager + fetchPriority="high"
-          // sinalizam LCP candidato; demais cards mantêm lazy para não desperdiçar banda.
           loading={priority ? 'eager' : 'lazy'}
           fetchPriority={priority ? 'high' : 'auto'}
           width={400}
           height={533}
           className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
         />
+
+        {/* Botão toggle masculino/feminino — só aparece em mobile (touch). Em desktop o hover já faz o toggle */}
+        {hasBothGenders && (
+          <button
+            onClick={(e) => {
+              e.stopPropagation();
+              handleToggleGender();
+            }}
+            aria-label={`Ver modelo ${currentGender === 'masculino' ? 'feminino' : 'masculino'}`}
+            className="md:hidden absolute bottom-2 left-2 flex items-center gap-1 bg-black/60 backdrop-blur-sm text-white text-xs font-medium px-2 py-1 rounded-full transition-opacity"
+          >
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              width="12"
+              height="12"
+              viewBox="0 0 24 24"
+              fill="currentColor"
+              aria-hidden="true"
+            >
+              <path d="M12 12c2.7 0 4.8-2.1 4.8-4.8S14.7 2.4 12 2.4 7.2 4.5 7.2 7.2 9.3 12 12 12zm0 2.4c-3.2 0-9.6 1.6-9.6 4.8v2.4h19.2v-2.4c0-3.2-6.4-4.8-9.6-4.8z"/>
+            </svg>
+            {currentGender === 'masculino' ? 'Ver feminino' : 'Ver masculino'}
+          </button>
+        )}
 
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-2">
@@ -405,21 +427,6 @@ function ProductCard({
               &#9792;
             </span>
           </div>
-        )}
-
-        {/* Mobile gender toggle button */}
-        {showGenderBadge && (
-          <button
-            className="md:hidden absolute bottom-3 left-3 bg-black/60 text-white text-xs px-3 py-1 rounded-full z-10"
-            onClick={(e) => {
-              e.stopPropagation();
-              handleToggleGender();
-            }}
-          >
-            {currentGender === 'masculino'
-              ? '\u2640 Ver feminino'
-              : '\u2642 Ver masculino'}
-          </button>
         )}
 
         {/* Hover hint (desktop only) */}
