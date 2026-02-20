@@ -88,7 +88,7 @@ export function CatalogHero({ totalProducts, hasActiveFilters, isLoading }: Cata
           decoding="sync": decodificação síncrona para aparecer no primeiro frame.
         */}
         <img
-          src="/hero-catalogo.webp"
+          src="/hero-catalogo-new.webp"
           alt="Catálogo Bravos Brasil"
           fetchPriority="high"
           loading="eager"
