@@ -50,6 +50,11 @@ function FeaturedCard({ product, onClick }: { product: Product; onClick: () => v
       ? modelImages.feminino.url
       : modelImages.masculino?.url ?? modelImages.default?.url ?? product.image;
 
+  const handleToggleGender = () => {
+    if (!hasBothGenders) return;
+    setCurrentGender(prev => prev === 'masculino' ? 'feminino' : 'masculino');
+  };
+
   return (
     <div
       className="product-card group bg-white rounded-xl overflow-hidden border border-gray-100 hover-lift cursor-pointer"
@@ -57,7 +62,7 @@ function FeaturedCard({ product, onClick }: { product: Product; onClick: () => v
     >
       <div
         className="relative aspect-[3/4] overflow-hidden bg-gray-100"
-        onMouseEnter={() => hasBothGenders && setCurrentGender(prev => prev === 'masculino' ? 'feminino' : 'masculino')}
+        onMouseEnter={handleToggleGender}
       >
         <img
           src={currentImageUrl ?? undefined}
@@ -67,6 +72,34 @@ function FeaturedCard({ product, onClick }: { product: Product; onClick: () => v
           height={533}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
+        {hasBothGenders && (
+          <>
+            {currentGender === 'masculino' && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleGender();
+                }}
+                aria-label="Ver modelo feminino"
+                className="md:hidden absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center bg-pink-400/70 backdrop-blur-sm text-white rounded-full text-xs font-bold leading-none"
+              >
+                ♀
+              </button>
+            )}
+            {currentGender === 'feminino' && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  handleToggleGender();
+                }}
+                aria-label="Ver modelo masculino"
+                className="md:hidden absolute left-1 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center bg-blue-400/70 backdrop-blur-sm text-white rounded-full text-xs font-bold leading-none"
+              >
+                ♂
+              </button>
+            )}
+          </>
+        )}
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-col gap-2">
           {product.isNew && (
