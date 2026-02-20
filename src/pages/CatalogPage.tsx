@@ -274,11 +274,14 @@ function ProductCard({
   formatPrice,
   formatInstallment,
   selectedGender,
+  priority = false,
 }: {
   product: Product;
   formatPrice: (n: number) => string;
   formatInstallment: (n: number) => string;
   selectedGender: string;
+  /** true = primeiro card do grid (LCP candidato em mobile 1 coluna) */
+  priority?: boolean;
 }) {
   const navigate = useNavigate();
   const modelImages = useMemo(() => {
@@ -355,7 +358,10 @@ function ProductCard({
         <img
           src={currentImageUrl ?? undefined}
           alt={product.name}
-          loading="lazy"
+          // priority=true: primeiro card do grid (mobile 1 coluna). eager + fetchPriority="high"
+          // sinalizam LCP candidato; demais cards mantêm lazy para não desperdiçar banda.
+          loading={priority ? 'eager' : 'lazy'}
+          fetchPriority={priority ? 'high' : 'auto'}
           width={400}
           height={533}
           className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
@@ -883,13 +889,14 @@ function CatalogContent() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {filteredProducts.map((product) => (
+                  {filteredProducts.map((product, index) => (
                     <ProductCard
                       key={product.id}
                       product={product}
                       formatPrice={formatPrice}
                       formatInstallment={formatInstallment}
                       selectedGender={filters.gender}
+                      priority={index === 0}
                     />
                   ))}
                 </div>
