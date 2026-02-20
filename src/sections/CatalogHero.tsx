@@ -79,11 +79,21 @@ export function CatalogHero({ totalProducts, hasActiveFilters, isLoading }: Cata
         ref={imageRef}
         className="absolute inset-0 w-full h-[120%] -top-[10%]"
       >
+        {/*
+          IMAGEM LCP — hero do catálogo
+          fetchpriority="high": prioridade máxima no scheduler de rede; combinado com
+          <link rel="preload"> no index.html, garante download o mais cedo possível.
+          loading="eager": NÃO usar loading="lazy" em imagem LCP — lazy adia o download
+          até o elemento entrar no viewport, o oposto do desejado above-the-fold.
+          decoding="sync": decodificação síncrona para aparecer no primeiro frame.
+        */}
         <img
           src="/hero-catalogo.webp"
           alt="Catálogo Bravos Brasil"
-          className="w-full h-full object-cover"
+          fetchPriority="high"
           loading="eager"
+          decoding="sync"
+          className="w-full h-full object-cover"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/70" />
         <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent" />
