@@ -161,18 +161,20 @@ export function Testimonials() {
             variant="outline"
             size="icon"
             onClick={goToPrevious}
+            aria-label="Depoimento anterior"
             className="absolute left-0 top-1/2 -translate-y-1/2 -translate-x-4 w-12 h-12 rounded-full bg-white shadow-lg hover:bg-[#00843D] hover:text-white hidden md:flex"
           >
-            <ChevronLeft className="w-6 h-6" />
+            <ChevronLeft className="w-6 h-6" aria-hidden="true" />
           </Button>
           
           <Button
             variant="outline"
             size="icon"
             onClick={goToNext}
+            aria-label="Próximo depoimento"
             className="absolute right-0 top-1/2 -translate-y-1/2 translate-x-4 w-12 h-12 rounded-full bg-white shadow-lg hover:bg-[#00843D] hover:text-white hidden md:flex"
           >
-            <ChevronRight className="w-6 h-6" />
+            <ChevronRight className="w-6 h-6" aria-hidden="true" />
           </Button>
 
           {/* Dots */}

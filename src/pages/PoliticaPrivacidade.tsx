@@ -11,7 +11,7 @@ export default function PoliticaPrivacidade() {
 
   return (
     <CartProvider>
-      <div className="min-h-screen bg-white">
+      <main className="min-h-screen bg-white">
         <Header />
 
         {/* Hero */}
@@ -132,7 +132,7 @@ export default function PoliticaPrivacidade() {
         </section>
 
         <Footer />
-      </div>
+      </main>
     </CartProvider>
   );
 }

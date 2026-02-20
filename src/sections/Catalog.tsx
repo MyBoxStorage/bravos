@@ -269,8 +269,10 @@ export function Catalog() {
             } md:block w-full md:w-64 flex-shrink-0 space-y-6`}
           >
             {/* Category */}
-            <div>
-              <h3 className="font-display text-lg text-gray-900 mb-3">CATEGORIA</h3>
+            <fieldset className="border-0 p-0 m-0">
+              <legend className="font-display text-lg text-gray-900 mb-3 w-full">
+                CATEGORIA
+              </legend>
               <div className="space-y-2">
                 {categories.map((cat) => (
                   <label
@@ -287,11 +289,13 @@ export function Catalog() {
                   </label>
                 ))}
               </div>
-            </div>
+            </fieldset>
 
             {/* Size */}
-            <div>
-              <h3 className="font-display text-lg text-gray-900 mb-3">TAMANHO</h3>
+            <fieldset className="border-0 p-0 m-0">
+              <legend className="font-display text-lg text-gray-900 mb-3 w-full">
+                TAMANHO
+              </legend>
               <div className="flex flex-wrap gap-2">
                 {sizes.map((size) => (
                   <button
@@ -307,11 +311,13 @@ export function Catalog() {
                   </button>
                 ))}
               </div>
-            </div>
+            </fieldset>
 
             {/* Color */}
-            <div>
-              <h3 className="font-display text-lg text-gray-900 mb-3">COR</h3>
+            <fieldset className="border-0 p-0 m-0">
+              <legend className="font-display text-lg text-gray-900 mb-3 w-full">
+                COR
+              </legend>
               <div className="space-y-2">
                 {colors.map((color) => (
                   <label
@@ -332,11 +338,13 @@ export function Catalog() {
                   </label>
                 ))}
               </div>
-            </div>
+            </fieldset>
 
             {/* Price Range */}
-            <div>
-              <h3 className="font-display text-lg text-gray-900 mb-3">PREÇO</h3>
+            <fieldset className="border-0 p-0 m-0">
+              <legend className="font-display text-lg text-gray-900 mb-3 w-full">
+                PREÇO
+              </legend>
               <div className="space-y-2">
                 {[
                   { label: 'Até R$ 60', range: [0, 60] },
@@ -354,7 +362,7 @@ export function Catalog() {
                   </label>
                 ))}
               </div>
-            </div>
+            </fieldset>
           </aside>
 
           {/* Products Grid */}

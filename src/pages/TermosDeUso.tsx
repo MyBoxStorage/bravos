@@ -11,7 +11,7 @@ export default function TermosDeUso() {
 
   return (
     <CartProvider>
-      <div className="min-h-screen bg-white">
+      <main className="min-h-screen bg-white">
         <Header />
 
         {/* Hero */}
@@ -134,7 +134,7 @@ export default function TermosDeUso() {
         </section>
 
         <Footer />
-      </div>
+      </main>
     </CartProvider>
   );
 }

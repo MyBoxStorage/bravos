@@ -1,85 +1,18 @@
 <!doctype html>
 <html lang="pt-BR">
   <head>
-    <!-- 1. Charset SEMPRE primeiro — o browser precisa disso para parsear o HTML corretamente -->
-    <meta charset="UTF-8" />
-
-    <!-- 2. Viewport SEMPRE segundo — evita double-render no mobile e zoom acidental -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-
-    <!-- 3. Preconnects para origens externas críticas — abre TCP/TLS antecipado -->
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-
-    <!-- 4. PRELOAD DA IMAGEM LCP — inicia o download antes do React hidratar -->
-    <link
-      rel="preload"
-      as="image"
-      href="/hero-catalogo.webp"
-      type="image/webp"
-      fetchpriority="high"
-    />
-
-    <!-- 5. Preload do CSS de fontes -->
-    <link
-      rel="preload"
-      as="style"
-      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap"
-    />
-
-    <!-- 6. Stylesheet das fontes -->
-    <link
-      rel="stylesheet"
-      href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap"
-    />
-
-    <!-- 7. SEO e metadados -->
-    <title>BRAVOS BRASIL - Vista Seu Patriotismo</title>
-    <meta name="description" content="Roupas patrióticas brasileiras com identidade nacional, fé e tradição. Camisetas premium com estampas exclusivas. Compre agora e vista seu patriotismo." />
-    <meta name="robots" content="index, follow" />
-    <link rel="canonical" href="https://bravosbrasil.com.br/" />
-    <meta property="og:type" content="website" />
-    <meta property="og:site_name" content="BRAVOS BRASIL" />
-    <meta property="og:title" content="BRAVOS BRASIL - Vista Seu Patriotismo" />
-    <meta property="og:description" content="Roupas patrióticas brasileiras com identidade nacional, fé e tradição. Camisetas premium com estampas exclusivas." />
-    <meta property="og:url" content="https://bravosbrasil.com.br/" />
-    <meta property="og:image" content="https://bravosbrasil.com.br/og-image.jpg" />
-    <meta property="og:image:width" content="1200" />
-    <meta property="og:image:height" content="630" />
-    <meta property="og:locale" content="pt_BR" />
-    <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="BRAVOS BRASIL - Vista Seu Patriotismo" />
-    <meta name="twitter:description" content="Roupas patrióticas brasileiras com identidade nacional, fé e tradição. Camisetas premium com estampas exclusivas." />
-    <meta name="twitter:image" content="https://bravosbrasil.com.br/og-image.jpg" />
-
-    <!-- 8. Favicons -->
-    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
-    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
-  </head>
-  <body>
-    <noscript>
-      <img height="1" width="1" style="display:none"
-        src="https://www.facebook.com/tr?id=1257245499846147&ev=PageView&noscript=1"/>
-    </noscript>
-    <div id="root"></div>
-
-    <!-- 1. MP security (defer — não bloqueia o parser) -->
-    <script src="https://www.mercadopago.com/v2/security.js" view="checkout" defer></script>
-
-    <!-- 2. main.tsx (module — já tem defer implícito) -->
-    <script type="module" src="/src/main.tsx"></script>
-
-    <!-- 3. GA4 (movido do head — elimina bloqueio de parsing) -->
+    <!-- Google Analytics 4 -->
     <script async src="https://www.googletagmanager.com/gtag/js?id=G-M2QW8W8X0M"></script>
     <script>
       window.dataLayer = window.dataLayer || [];
       function gtag(){dataLayer.push(arguments);}
       gtag('js', new Date());
-      gtag('config', 'G-M2QW8W8X0M', { page_path: window.location.pathname });
+      gtag('config', 'G-M2QW8W8X0M', {
+        page_path: window.location.pathname,
+      });
     </script>
 
-    <!-- 4. Facebook Pixel (movido do head — elimina bloqueio de parsing) -->
+    <!-- Meta Pixel -->
     <script>
       !function(f,b,e,v,n,t,s)
       {if(f.fbq)return;n=f.fbq=function(){n.callMethod?
@@ -92,5 +25,51 @@
       fbq('init', '1257245499846147');
       fbq('track', 'PageView');
     </script>
+
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- SEO Default (sobrescrito por cada página via JS) -->
+    <title>BRAVOS BRASIL - Vista Seu Patriotismo</title>
+    <meta name="description" content="Roupas patrióticas brasileiras com identidade nacional, fé e tradição. Camisetas premium com estampas exclusivas. Compre agora e vista seu patriotismo." />
+    <meta name="robots" content="index, follow" />
+    <link rel="canonical" href="https://bravosbrasil.com.br/" />
+
+    <!-- Open Graph Default -->
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="BRAVOS BRASIL" />
+    <meta property="og:title" content="BRAVOS BRASIL - Vista Seu Patriotismo" />
+    <meta property="og:description" content="Roupas patrióticas brasileiras com identidade nacional, fé e tradição. Camisetas premium com estampas exclusivas." />
+    <meta property="og:url" content="https://bravosbrasil.com.br/" />
+    <meta property="og:image" content="https://bravosbrasil.com.br/og-image.jpg" />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:locale" content="pt_BR" />
+
+    <!-- Twitter Card Default -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="BRAVOS BRASIL - Vista Seu Patriotismo" />
+    <meta name="twitter:description" content="Roupas patrióticas brasileiras com identidade nacional, fé e tradição. Camisetas premium com estampas exclusivas." />
+    <meta name="twitter:image" content="https://bravosbrasil.com.br/og-image.jpg" />
+
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="/favicon.ico" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+
+    <!-- Fontes: preconnect antes do stylesheet para não bloquear render -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" />
+    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <noscript>
+      <img height="1" width="1" style="display:none"
+        src="https://www.facebook.com/tr?id=1257245499846147&ev=PageView&noscript=1"/>
+    </noscript>
+    <div id="root"></div>
+    <script src="https://www.mercadopago.com/v2/security.js" view="checkout"></script>
+    <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

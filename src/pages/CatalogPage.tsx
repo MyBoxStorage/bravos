@@ -36,6 +36,7 @@ import {
 import { categories, sizes, colors } from '@/data/products';
 import { useCatalogProducts } from '@/hooks/useCatalogProducts';
 import { Header } from '@/sections/Header';
+import { MercadoPagoProvider } from '@/components/MercadoPagoProvider';
 import { Footer } from '@/sections/Footer';
 import { FloatingWhatsApp } from '@/components/FloatingWhatsApp';
 import { CartProvider } from '@/hooks/useCart';
@@ -108,10 +109,10 @@ function FiltersContent({
       )}
 
       {/* CATEGORIA */}
-      <div className="mb-6">
-        <h3 className="font-display text-sm uppercase text-gray-700 mb-3 tracking-wide">
+      <fieldset className="border-0 p-0 m-0 mb-6">
+        <legend className="font-display text-sm uppercase text-gray-700 mb-3 tracking-wide w-full">
           CATEGORIA
-        </h3>
+        </legend>
         <div className="space-y-2">
           {categories.map((cat) => (
             <label
@@ -129,15 +130,15 @@ function FiltersContent({
             </label>
           ))}
         </div>
-      </div>
+      </fieldset>
 
       <div className="border-t border-gray-200 my-6" />
 
       {/* GENERO */}
-      <div className="mb-6">
-        <h3 className="font-display text-sm uppercase text-gray-700 mb-3 tracking-wide">
+      <fieldset className="border-0 p-0 m-0 mb-6">
+        <legend className="font-display text-sm uppercase text-gray-700 mb-3 tracking-wide w-full">
           GENERO
-        </h3>
+        </legend>
         <div className="flex flex-col gap-2">
           {([
             { id: '' as '' | Gender, label: 'Todos' },
@@ -163,15 +164,15 @@ function FiltersContent({
             </label>
           ))}
         </div>
-      </div>
+      </fieldset>
 
       <div className="border-t border-gray-200 my-6" />
 
       {/* TAMANHO */}
-      <div className="mb-6">
-        <h3 className="font-display text-sm uppercase text-gray-700 mb-3 tracking-wide">
+      <fieldset className="border-0 p-0 m-0 mb-6">
+        <legend className="font-display text-sm uppercase text-gray-700 mb-3 tracking-wide w-full">
           TAMANHO
-        </h3>
+        </legend>
         <div className="flex flex-wrap gap-2">
           {sizes.map((size) => (
             <button
@@ -187,15 +188,15 @@ function FiltersContent({
             </button>
           ))}
         </div>
-      </div>
+      </fieldset>
 
       <div className="border-t border-gray-200 my-6" />
 
       {/* COR */}
-      <div className="mb-6">
-        <h3 className="font-display text-sm uppercase text-gray-700 mb-3 tracking-wide">
+      <fieldset className="border-0 p-0 m-0 mb-6">
+        <legend className="font-display text-sm uppercase text-gray-700 mb-3 tracking-wide w-full">
           COR
-        </h3>
+        </legend>
         <div className="space-y-2">
           {colors.map((color) => (
             <label
@@ -217,15 +218,15 @@ function FiltersContent({
             </label>
           ))}
         </div>
-      </div>
+      </fieldset>
 
       <div className="border-t border-gray-200 my-6" />
 
       {/* FAIXA DE PRECO */}
-      <div className="mb-6">
-        <h3 className="font-display text-sm uppercase text-gray-700 mb-3 tracking-wide">
+      <fieldset className="border-0 p-0 m-0 mb-6">
+        <legend className="font-display text-sm uppercase text-gray-700 mb-3 tracking-wide w-full">
           FAIXA DE PREÇO
-        </h3>
+        </legend>
         <div className="space-y-2">
           {[
             { label: 'Todos os preços', range: null },
@@ -261,7 +262,7 @@ function FiltersContent({
             </label>
           ))}
         </div>
-      </div>
+      </fieldset>
     </>
   );
 }
@@ -739,7 +740,7 @@ function CatalogContent() {
   }, [page, totalPages]);
 
   return (
-    <div className="min-h-screen bg-gray-50">
+    <main className="min-h-screen bg-gray-50">
       <JsonLd data={{
         "@context": "https://schema.org",
         "@type": "BreadcrumbList",
@@ -935,7 +936,7 @@ function CatalogContent() {
 
       <Footer />
       <FloatingWhatsApp />
-    </div>
+    </main>
   );
 }
 

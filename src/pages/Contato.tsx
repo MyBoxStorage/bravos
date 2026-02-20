@@ -11,7 +11,7 @@ export default function Contato() {
 
   return (
     <CartProvider>
-      <div className="min-h-screen bg-white">
+      <main className="min-h-screen bg-white">
         <Header />
 
         {/* Hero */}
@@ -154,7 +154,7 @@ export default function Contato() {
         </section>
 
         <Footer />
-      </div>
+      </main>
     </CartProvider>
   );
 }
