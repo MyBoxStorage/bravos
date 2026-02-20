@@ -375,7 +375,7 @@ function ProductCard({
                   handleToggleGender();
                 }}
                 aria-label="Ver modelo masculino"
-                className="md:hidden absolute left-1 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center bg-black/50 backdrop-blur-sm text-white rounded-full text-xs font-bold leading-none"
+                className="md:hidden absolute left-1 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center bg-blue-400/70 backdrop-blur-sm text-white rounded-full text-xs font-bold leading-none"
               >
                 ♂
               </button>
@@ -387,7 +387,7 @@ function ProductCard({
                   handleToggleGender();
                 }}
                 aria-label="Ver modelo feminino"
-                className="md:hidden absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center bg-black/50 backdrop-blur-sm text-white rounded-full text-xs font-bold leading-none"
+                className="md:hidden absolute right-1 top-1/2 -translate-y-1/2 w-7 h-7 flex items-center justify-center bg-pink-400/70 backdrop-blur-sm text-white rounded-full text-xs font-bold leading-none"
               >
                 ♀
               </button>
