@@ -862,7 +862,7 @@ function CatalogContent() {
             {/* Products Grid */}
             <div ref={gridContainerRef}>
               {catalogLoading && publicProducts.length === 0 ? (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
                   {Array.from({ length: PAGE_SIZE }).map((_, i) => (
                     <div key={`skel-${i}`} className="bg-white rounded-2xl overflow-hidden border border-gray-100">
                       <Skeleton className="aspect-[3/4] w-full" />
@@ -888,7 +888,7 @@ function CatalogContent() {
                   </Button>
                 </div>
               ) : (
-                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                <div className="grid grid-cols-2 lg:grid-cols-3 gap-3 sm:gap-6">
                   {filteredProducts.map((product, index) => (
                     <ProductCard
                       key={product.id}
