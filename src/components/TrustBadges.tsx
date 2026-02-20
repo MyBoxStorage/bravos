@@ -46,7 +46,7 @@ export function TrustBadges({ variant }: TrustBadgesProps) {
 
   // variant === 'pdp'
   return (
-    <div className="grid grid-cols-3 gap-3 pt-4 border-t border-gray-100">
+    <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-4 border-t border-gray-100">
       {badges.map(({ icon: Icon, title, subtitle, color, bg }) => (
         <div key={title} className="text-center space-y-2">
           <div

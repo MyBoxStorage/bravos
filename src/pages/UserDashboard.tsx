@@ -441,20 +441,20 @@ export default function UserDashboard() {
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4 lg:w-auto">
-            <TabsTrigger value="overview" className="flex items-center gap-2">
+          <TabsList className="grid w-full grid-cols-2 sm:grid-cols-4 lg:w-auto">
+            <TabsTrigger value="overview" className="flex flex-col items-center gap-1">
               <User className="w-4 h-4" />
               <span className="hidden sm:inline">Visão Geral</span>
             </TabsTrigger>
-            <TabsTrigger value="orders" className="flex items-center gap-2">
+            <TabsTrigger value="orders" className="flex flex-col items-center gap-1">
               <Package className="w-4 h-4" />
               <span className="hidden sm:inline">Meus Pedidos</span>
             </TabsTrigger>
-            <TabsTrigger value="stamps" className="flex items-center gap-2">
+            <TabsTrigger value="stamps" className="flex flex-col items-center gap-1">
               <Image className="w-4 h-4" />
               <span className="hidden sm:inline">Minhas Estampas</span>
             </TabsTrigger>
-            <TabsTrigger value="account" className="flex items-center gap-2">
+            <TabsTrigger value="account" className="flex flex-col items-center gap-1">
               <Settings className="w-4 h-4" />
               <span className="hidden sm:inline">Configurações</span>
             </TabsTrigger>

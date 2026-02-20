@@ -167,7 +167,7 @@ export function Footer() {
           {/* Payment */}
           <div className="footer-column">
             <h3 className="font-display text-xl mb-6">FORMAS DE PAGAMENTO</h3>
-            <div className="grid grid-cols-3 gap-3 mb-6">
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-6">
               {paymentMethods.map((method) => (
                 <div
                   key={method}

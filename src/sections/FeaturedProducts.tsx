@@ -62,6 +62,9 @@ function FeaturedCard({ product, onClick }: { product: Product; onClick: () => v
         <img
           src={currentImageUrl ?? undefined}
           alt={product.name}
+          loading="lazy"
+          width={400}
+          height={533}
           className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-110"
         />
         {/* Badges */}
@@ -149,6 +152,9 @@ function ProductDialog({ product, isOpen, onClose }: ProductDialogProps) {
           <img
             src={currentImage}
             alt={product.name}
+            loading="eager"
+            width={600}
+            height={800}
             className="w-full h-80 object-cover rounded-lg transition-all duration-300"
           />
           

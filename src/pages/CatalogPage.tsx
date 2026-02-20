@@ -357,6 +357,8 @@ function ProductCard({
           src={currentImageUrl ?? undefined}
           alt={product.name}
           loading="lazy"
+          width={400}
+          height={533}
           className="w-full h-full object-cover transition-all duration-500 group-hover:scale-105"
         />
 
@@ -461,6 +463,8 @@ function ProductCard({
                 src={currentImageUrl ?? undefined}
                 alt={product.name}
                 loading="lazy"
+                width={400}
+                height={533}
                 className="w-full h-40 object-cover"
               />
               <div className="p-3 space-y-1.5">
