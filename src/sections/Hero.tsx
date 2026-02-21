@@ -93,7 +93,7 @@ export function Hero() {
         className="absolute inset-0 w-full h-[120%] -top-[10%]"
       >
         <img
-          src="/hero-catalogo-new.webp"
+          src="/hero-v3.webp"
           alt="BRAVOS BRASIL"
           fetchPriority="high"
           loading="eager"
