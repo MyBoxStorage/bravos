@@ -85,7 +85,7 @@ export function Hero() {
     <section
       id="hero"
       ref={sectionRef}
-      className="relative h-[233px] md:h-[466px] flex items-center justify-center overflow-hidden"
+      className="relative min-h-screen flex items-center justify-center overflow-hidden"
     >
       {/* Background Image with Parallax */}
       <div
