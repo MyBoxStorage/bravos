@@ -20,7 +20,7 @@ export const CORE_ENV_KEYS = [
 export const OPTIONAL_ENV_KEYS = [
   'GEMINI_API_KEY',
   'GCS_KEY_BASE64',
-  'GMAIL_USER',
+  'RESEND_API_KEY',
   'TELEGRAM_BOT_TOKEN',
 ] as const;
 
