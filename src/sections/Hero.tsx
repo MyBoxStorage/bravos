@@ -85,7 +85,7 @@ export function Hero() {
     <section
       id="hero"
       ref={sectionRef}
-      className="relative min-h-screen flex items-center justify-center overflow-hidden"
+      className="relative h-[233px] md:h-[466px] flex items-center justify-center overflow-hidden"
     >
       {/* Background Image with Parallax */}
       <div
@@ -93,14 +93,14 @@ export function Hero() {
         className="absolute inset-0 w-full h-[120%] -top-[10%]"
       >
         <img
-          src="/hero-bg.jpg"
+          src="/hero-bg.webp"
           alt="BRAVOS BRASIL"
           fetchPriority="high"
           loading="eager"
           decoding="async"
           width={1920}
           height={1080}
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover object-bottom"
         />
         {/* Gradient Overlay */}
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/70" />
