@@ -706,7 +706,7 @@ export default function ProductPage() {
   return (
     <CartProvider>
       <ProductContent />
-      <Toaster position="bottom-right" richColors />
+      <Toaster position="bottom-left" richColors />
     </CartProvider>
   );
 }

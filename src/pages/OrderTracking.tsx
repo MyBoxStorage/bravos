@@ -3,7 +3,7 @@
  * Rota: /order
  *
  * Permite buscar pedido por email + externalReference.
- * Suporta ?ref= para preencher número do pedido. PENDING: um auto-refresh após 30s.
+ * Suporta ?ref= para preencher número do pedido. PENDING: polling a cada 10s.
  * Em desenvolvimento: ?simulate=PENDING|PAID|... simula um pedido com esse status para QA.
  */
 import { useState, useRef, useEffect } from 'react';
@@ -24,7 +24,7 @@ import { toast } from 'sonner';
 import { buildWhatsAppLink } from '@/utils/whatsapp';
 import { useOrderEvents } from '@/hooks/useOrderEvents';
 
-const PENDING_AUTO_REFRESH_MS = 30_000;
+const PENDING_POLL_INTERVAL_MS = 10_000;
 
 const ALL_STATUSES: OrderStatus[] = [
   'PENDING', 'PAID', 'READY_FOR_MONTINK', 'SENT_TO_MONTINK',
@@ -121,7 +121,6 @@ export default function OrderTracking() {
   const [suggestAutoFetch, setSuggestAutoFetch] = useState(false);
   const [copied, setCopied] = useState(false);
   const [simulatedStatus, setSimulatedStatus] = useState<OrderStatus | null>(null);
-  const pendingAutoRefreshDone = useRef(false);
   const stateAppliedRef = useRef(false);
 
   const statusLabels: Record<string, string> = {
@@ -179,10 +178,9 @@ export default function OrderTracking() {
   }, [state]);
 
   useEffect(() => {
-    if (!order || order.status !== 'PENDING' || !email || pendingAutoRefreshDone.current || simulatedStatus !== null) return;
+    if (!order || order.status !== 'PENDING' || !email || simulatedStatus !== null) return;
     let cancelled = false;
-    const t = setTimeout(async () => {
-      pendingAutoRefreshDone.current = true;
+    const poll = async () => {
       try {
         const updated = await loadOrder(order.externalReference, email);
         if (!cancelled) {
@@ -192,10 +190,12 @@ export default function OrderTracking() {
       } catch (err) {
         if (!cancelled) toast.info('Atualização automática em segundo plano. Use "Atualizar status" se precisar.');
       }
-    }, PENDING_AUTO_REFRESH_MS);
+    };
+    poll();
+    const id = setInterval(poll, PENDING_POLL_INTERVAL_MS);
     return () => {
       cancelled = true;
-      clearTimeout(t);
+      clearInterval(id);
     };
   }, [order?.orderId, order?.status, order?.externalReference, email]);
 

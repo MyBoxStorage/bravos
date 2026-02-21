@@ -145,7 +145,7 @@ export default function HomePage() {
           <Footer />
           <FloatingWhatsApp />
       </div>
-      <Toaster position="bottom-right" richColors />
+      <Toaster position="bottom-left" richColors />
     </CartProvider>
   );
 }

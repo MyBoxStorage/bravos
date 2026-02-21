@@ -966,7 +966,7 @@ export function CatalogPage() {
   return (
     <CartProvider>
       <CatalogContent />
-      <Toaster position="bottom-right" richColors />
+      <Toaster position="bottom-left" richColors />
     </CartProvider>
   );
 }
