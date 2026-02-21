@@ -11,7 +11,7 @@ const { sendOrderConfirmationEmail } = await import('../utils/email.js');
 
 const payload = {
   name: 'Pedro Bonfante',
-  email: 'techgeniushq@gmail.com',
+  email: 'regomes23@icloud.com',
   orderId: 'order_TESTE123456',
   items: [
     { name: 'Camiseta Patriota', color: 'verde', size: 'GG', quantity: 1, unitPrice: 89.9 },
@@ -23,7 +23,7 @@ const payload = {
   shippingAddress: 'Rua das Nações, 1822 - Rio de Janeiro, RJ - CEP 22041-001',
 };
 
-console.log('Enviando e-mail de teste para techgeniushq@gmail.com...\n');
+console.log('Enviando e-mail de teste para regomes23@icloud.com...\n');
 
 try {
   const result = await sendOrderConfirmationEmail(payload);
