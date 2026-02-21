@@ -6,7 +6,6 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { toast } from 'sonner';
 import { apiConfig } from '@/config/api';
-import { useAuth } from '@/contexts/AuthContext';
 import {
   Dialog,
   DialogContent,
@@ -40,7 +39,6 @@ export function Newsletter() {
   const [showExitPopup, setShowExitPopup] = useState(false);
   const [exitCouponRevealed, setExitCouponRevealed] = useState(false);
   const hasShownPopup = useRef(false);
-  const { user } = useAuth();
 
   useEffect(() => {
     const ctx = gsap.context(() => {
