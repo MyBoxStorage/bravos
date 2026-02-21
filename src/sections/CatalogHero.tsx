@@ -72,7 +72,7 @@ export function CatalogHero({ totalProducts, hasActiveFilters, isLoading }: Cata
   return (
     <section
       ref={heroRef}
-      className="relative h-[300px] md:h-[400px] w-full overflow-hidden"
+      className="relative h-[233px] md:h-[466px] w-full overflow-hidden"
     >
       {/* Background image with parallax */}
       <div
@@ -93,7 +93,7 @@ export function CatalogHero({ totalProducts, hasActiveFilters, isLoading }: Cata
           fetchPriority="high"
           loading="eager"
           decoding="sync"
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover object-[center_bottom]"
         />
         <div className="absolute inset-0 bg-gradient-to-b from-black/50 via-black/30 to-black/70" />
         <div className="absolute inset-0 bg-gradient-to-r from-black/60 via-transparent to-transparent" />
