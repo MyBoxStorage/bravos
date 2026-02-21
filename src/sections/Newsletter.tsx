@@ -16,6 +16,11 @@ import {
 
 gsap.registerPlugin(ScrollTrigger);
 
+const COUPON_MODAL_DISMISSED = 'coupon_modal_dismissed';
+const COUPON_REDEEMED = 'coupon_redeemed';
+const HAS_PURCHASED = 'has_purchased';
+const TIME_ON_SITE_BEFORE_POPUP_MS = 180 * 1000; // 3 minutos
+
 async function postSubscribe(email: string) {
   const res = await fetch(`${apiConfig.baseURL}/api/newsletter/subscribe`, {
     method: 'POST',
@@ -58,18 +63,25 @@ export function Newsletter() {
   }, []);
 
   useEffect(() => {
-    const handleMouseLeave = (e: MouseEvent) => {
-      if (e.clientY <= 0 && !hasShownPopup.current && !user) {
-        hasShownPopup.current = true;
-        setTimeout(() => {
-          setShowExitPopup(true);
-        }, 10000);
-      }
-    };
+    if (hasShownPopup.current) return;
+    if (typeof window === 'undefined') return;
 
-    document.addEventListener('mouseleave', handleMouseLeave);
-    return () => document.removeEventListener('mouseleave', handleMouseLeave);
-  }, [user]);
+    if (localStorage.getItem(HAS_PURCHASED) === '1') return;
+    if (localStorage.getItem(COUPON_REDEEMED) === '1') return;
+    if (sessionStorage.getItem(COUPON_MODAL_DISMISSED) === '1') return;
+
+    const timer = setTimeout(() => {
+      if (hasShownPopup.current) return;
+      if (localStorage.getItem(HAS_PURCHASED) === '1') return;
+      if (localStorage.getItem(COUPON_REDEEMED) === '1') return;
+      if (sessionStorage.getItem(COUPON_MODAL_DISMISSED) === '1') return;
+
+      hasShownPopup.current = true;
+      setShowExitPopup(true);
+    }, TIME_ON_SITE_BEFORE_POPUP_MS);
+
+    return () => clearTimeout(timer);
+  }, []);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,6 +117,9 @@ export function Newsletter() {
       setExitCouponRevealed(true);
       toast.success('🎁 Cupom BEMVINDO10 enviado para seu e-mail!');
       setEmail('');
+      try {
+        localStorage.setItem(COUPON_REDEEMED, '1');
+      } catch { /* ignore */ }
     } catch {
       toast.error('Não foi possível enviar. Tente novamente.');
     } finally {
@@ -177,7 +192,17 @@ export function Newsletter() {
       </section>
 
       {/* Exit Intent Popup */}
-      <Dialog open={showExitPopup} onOpenChange={setShowExitPopup}>
+      <Dialog
+        open={showExitPopup}
+        onOpenChange={(open) => {
+          setShowExitPopup(open);
+          if (!open) {
+            try {
+              sessionStorage.setItem(COUPON_MODAL_DISMISSED, '1');
+            } catch { /* ignore */ }
+          }
+        }}
+      >
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle className="font-display text-3xl text-[#00843D] text-center">

@@ -57,6 +57,7 @@ export default function CheckoutSuccess() {
     if (resolvedRef) {
       clearPendingCheckout();
       try { localStorage.removeItem('pixPaymentData'); } catch { /* ignore */ }
+      try { localStorage.setItem('has_purchased', '1'); } catch { /* ignore */ }
     }
   }, [resolvedRef]);
 
