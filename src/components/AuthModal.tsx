@@ -156,7 +156,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
   const labelBase = 'block text-sm font-medium text-gray-700 mb-1 font-body';
 
   return createPortal(
-    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4" style={{ zIndex: 9999 }}>
+    <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4" style={{ zIndex: 9999 }} onMouseDown={(e) => e.stopPropagation()}>
       <div className="bg-white rounded-xl max-w-md w-full p-6 relative max-h-[90vh] overflow-y-auto border border-gray-100 shadow-xl">
         <button
           onClick={step === 'verify' ? backToForm : onClose}
@@ -184,6 +184,7 @@ export function AuthModal({ isOpen, onClose, defaultMode = 'login' }: AuthModalP
                   inputMode="numeric"
                   maxLength={6}
                   placeholder="000000"
+                  autoFocus
                   className={`${inputBase} text-center text-2xl tracking-[0.5em]`}
                   {...verifyForm.register('code')}
                 />

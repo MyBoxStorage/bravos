@@ -122,7 +122,11 @@ export function Header() {
               </div>
             ) : (
               <button
-                onClick={() => setShowAuthModal(true)}
+                onClick={() => {
+                  setIsCartOpen(false);
+                  setIsCheckoutOpen(false);
+                  setShowAuthModal(true);
+                }}
                 className={`flex items-center gap-2 p-2 rounded-full transition-colors ${isScrolled ? 'hover:bg-gray-100 text-gray-800' : 'hover:bg-white/10 text-white'}`}
               >
                 <User size={20} />
