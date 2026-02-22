@@ -1,5 +1,4 @@
 import type { Response } from 'express';
-import { GoogleGenerativeAI } from '@google/generative-ai';
 import { generateStampSchema } from './schemas.js';
 import { prisma } from '../../utils/prisma.js';
 import type { AuthRequest } from '../../types/auth.js';
@@ -7,7 +6,9 @@ import { uploadImageToGCS } from '../../utils/storage.js';
 import { notifyNewGeneration } from '../../utils/telegram.js';
 import { sendError } from '../../utils/errorResponse.js';
 
-const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || '');
+// Geração de imagem via REST (bypass da SDK antiga; roteamento atualizado no Google)
+const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
+const GEMINI_IMAGE_MODEL = 'gemini-2.5-flash-image';
 
 if (!process.env.GEMINI_API_KEY) {
   console.warn('⚠️  WARNING: GEMINI_API_KEY not set!');
@@ -163,8 +164,23 @@ OBRIGATÓRIO:
         .replace(/\{\{USER_PROMPT\}\}/g, prompt)
         .replace(/\{\{HAS_TEXT\}\}/g, hasTextRequest ? 'SIM' : 'NÃO');
 
-      const model = genAI.getGenerativeModel({
-        model: 'gemini-2.0-flash-preview-image-generation',
+      const apiKey = process.env.GEMINI_API_KEY!;
+      const url = `${GEMINI_API_BASE}/models/${GEMINI_IMAGE_MODEL}:generateContent`;
+
+      const parts: Array<{ text: string } | { inlineData: { mimeType: string; data: string } }> = [
+        { text: fullPrompt },
+      ];
+      if (uploadedImage) {
+        parts.push({
+          inlineData: {
+            mimeType: 'image/jpeg',
+            data: uploadedImage.split(',')[1],
+          },
+        });
+      }
+
+      const body = {
+        contents: [{ role: 'user', parts }],
         generationConfig: {
           temperature: 1,
           topP: 0.95,
@@ -172,46 +188,47 @@ OBRIGATÓRIO:
           maxOutputTokens: 8192,
           responseModalities: ['IMAGE', 'TEXT'],
         },
+      };
+
+      const apiRes = await fetch(url, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-goog-api-key': apiKey,
+        },
+        body: JSON.stringify(body),
       });
 
-      const result = await model.generateContent({
-        contents: [
-          {
-            role: 'user',
-            parts: [
-              { text: fullPrompt },
-              ...(uploadedImage
-                ? [
-                    {
-                      inlineData: {
-                        mimeType: 'image/jpeg',
-                        data: uploadedImage.split(',')[1],
-                      },
-                    },
-                  ]
-                : []),
-            ],
-          },
-        ],
-      } as Parameters<typeof model.generateContent>[0]);
+      type GeminiError = { error?: { message?: string; status?: string } };
+      type GeminiContentPart = { inlineData?: { mimeType?: string; data?: string }; text?: string };
+      type GeminiGenerateResponse = {
+        candidates?: Array<{ content?: { parts?: GeminiContentPart[] } }>;
+      };
 
-      const response = result.response;
+      const responseJson = (await apiRes.json()) as GeminiError & GeminiGenerateResponse;
 
-      if (!response.candidates?.[0]?.content?.parts?.length) {
+      if (!apiRes.ok) {
+        const errMsg =
+          responseJson.error?.message ||
+          responseJson.error?.status ||
+          `HTTP ${apiRes.status}`;
+        throw new Error(`Gemini API: ${errMsg}`);
+      }
+
+      if (!responseJson.candidates?.[0]?.content?.parts?.length) {
         throw new Error('Gemini não retornou imagem');
       }
 
-      const imagePart = response.candidates[0].content.parts.find(
-        (part: { inlineData?: { mimeType?: string } }) =>
-          part.inlineData && part.inlineData.mimeType
+      const imagePart = responseJson.candidates[0].content.parts.find(
+        (part) => part.inlineData && part.inlineData.mimeType
       );
 
-      if (!imagePart || !imagePart.inlineData || !imagePart.inlineData.data) {
+      if (!imagePart?.inlineData?.data) {
         throw new Error('Gemini não retornou dados da imagem');
       }
 
       const imageData = imagePart.inlineData;
-      const imageBase64 = `data:${imageData.mimeType};base64,${imageData.data}`;
+      const imageBase64 = `data:${imageData.mimeType || 'image/png'};base64,${imageData.data}`;
 
       // Upload para Google Cloud Storage
       const fileName = `${user.email.replace('@', '_at_')}_${prompt

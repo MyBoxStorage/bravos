@@ -169,6 +169,8 @@ const allowedOrigins = [
     'https://bravosbrasil.com.br',
     'https://www.bravosbrasil.com.br',
     'http://localhost:5173',
+    'http://localhost:5174', // Vite dev (porta alternativa)
+    'http://localhost:5175', // Vite dev (porta alternativa)
   ]),
 ];
 
@@ -176,7 +178,8 @@ app.use(
   cors({
     origin: (origin, callback) => {
       // Allow requests with no origin (curl, webhooks, server-to-server)
-      if (!origin || allowedOrigins.includes(origin)) {
+      // Allow any localhost origin in dev (Vite pode usar 5173, 5174, 5175, etc.)
+      if (!origin || allowedOrigins.includes(origin) || origin.startsWith('http://localhost:')) {
         callback(null, true);
       } else {
         callback(new Error('Not allowed by CORS'));
