@@ -164,13 +164,13 @@ OBRIGATÓRIO:
         .replace(/\{\{HAS_TEXT\}\}/g, hasTextRequest ? 'SIM' : 'NÃO');
 
       const model = genAI.getGenerativeModel({
-        model: 'gemini-3-pro-image-preview',
+        model: 'gemini-2.0-flash-preview-image-generation',
         generationConfig: {
           temperature: 1,
           topP: 0.95,
           topK: 40,
           maxOutputTokens: 8192,
-          responseMimeType: 'text/plain',
+          responseModalities: ['IMAGE', 'TEXT'],
         },
       });
 
@@ -276,8 +276,26 @@ OBRIGATÓRIO:
       });
     } catch (error: unknown) {
       const err = error instanceof Error ? error : new Error(String(error));
+      // === RAW ERROR LOG (remover após capturar o log para o Gemini) ===
       console.error(`❌ Generation ${generation.id} failed:`, err.message);
-
+      console.error('[GEMINI_RAW_ERROR] name:', err.name);
+      console.error('[GEMINI_RAW_ERROR] message:', err.message);
+      console.error('[GEMINI_RAW_ERROR] stack:', (err as Error).stack);
+      if (error && typeof error === 'object') {
+        try {
+          const anyError = error as Record<string, unknown>;
+          if (anyError.response) console.error('[GEMINI_RAW_ERROR] response:', JSON.stringify(anyError.response, null, 2));
+          if (anyError.status) console.error('[GEMINI_RAW_ERROR] status:', anyError.status);
+          if (anyError.statusCode) console.error('[GEMINI_RAW_ERROR] statusCode:', anyError.statusCode);
+          if (anyError.code) console.error('[GEMINI_RAW_ERROR] code:', anyError.code);
+          if (anyError.details) console.error('[GEMINI_RAW_ERROR] details:', JSON.stringify(anyError.details, null, 2));
+          console.error('[GEMINI_RAW_ERROR] full error keys:', Object.keys(anyError));
+          console.error('[GEMINI_RAW_ERROR] full error (serialized):', JSON.stringify(error, Object.getOwnPropertyNames(error), 2));
+        } catch (e) {
+          console.error('[GEMINI_RAW_ERROR] (serialization failed):', e);
+        }
+      }
+      // === FIM RAW ERROR LOG ===
       await prisma.generation.update({
         where: { id: generation.id },
         data: {
@@ -285,7 +303,6 @@ OBRIGATÓRIO:
           errorMsg: err.message || 'Erro desconhecido',
         },
       });
-
       sendError(res, req, 500, 'GENERATION_FAILED', 'Tente novamente. Seu crédito não foi consumido.');
     }
   } catch (error: unknown) {
