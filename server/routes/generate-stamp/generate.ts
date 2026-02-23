@@ -215,6 +215,20 @@ OBRIGATÓRIO:
         throw new Error(`Gemini API: ${errMsg}`);
       }
 
+      const resp = responseJson as typeof responseJson & {
+        candidates?: Array<{ finishReason?: string; content?: unknown; safetyRatings?: unknown }>;
+        promptFeedback?: unknown;
+      };
+      console.log('[GEMINI_RESPONSE]', JSON.stringify({
+        candidatesLength: resp.candidates?.length,
+        firstCandidate: resp.candidates?.[0] ? {
+          finishReason: resp.candidates[0].finishReason,
+          content: resp.candidates[0].content,
+          safetyRatings: resp.candidates[0].safetyRatings,
+        } : null,
+        promptFeedback: resp.promptFeedback,
+      }, null, 2));
+
       if (!responseJson.candidates?.[0]?.content?.parts?.length) {
         throw new Error('Gemini não retornou imagem');
       }
