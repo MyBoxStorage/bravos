@@ -8,7 +8,7 @@ import { sendError } from '../../utils/errorResponse.js';
 
 // Geração de imagem via REST (bypass da SDK antiga; roteamento atualizado no Google)
 const GEMINI_API_BASE = 'https://generativelanguage.googleapis.com/v1beta';
-const GEMINI_IMAGE_MODEL = 'gemini-2.5-flash-image';
+const GEMINI_IMAGE_MODEL = 'gemini-3-pro-image-preview';
 
 if (!process.env.GEMINI_API_KEY) {
   console.warn('⚠️  WARNING: GEMINI_API_KEY not set!');
