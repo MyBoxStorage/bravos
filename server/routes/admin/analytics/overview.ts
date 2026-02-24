@@ -86,6 +86,8 @@ export async function getAnalyticsOverview(
       },
     });
 
+    const newsletterSubscribers = await prisma.newsletterSubscriber.count();
+
     // Vendas por dia (últimos 30 dias ou conforme filtro)
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
@@ -147,6 +149,7 @@ export async function getAnalyticsOverview(
           successfulGenerations,
           couponsUsed,
           totalDiscount: Number(totalDiscountResult._sum.discountAmount || 0),
+          newsletterSubscribers,
         },
         salesByDay: salesByDay.map((r) => ({
           date: r.date,

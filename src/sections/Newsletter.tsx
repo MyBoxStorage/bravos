@@ -20,11 +20,11 @@ const COUPON_REDEEMED = 'coupon_redeemed';
 const HAS_PURCHASED = 'has_purchased';
 const TIME_ON_SITE_BEFORE_POPUP_MS = 180 * 1000; // 3 minutos
 
-async function postSubscribe(email: string) {
+async function postSubscribe(email: string, source: 'website' | 'popup' = 'website') {
   const res = await fetch(`${apiConfig.baseURL}/api/newsletter/subscribe`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ email }),
+    body: JSON.stringify({ email, source }),
   });
   if (!res.ok) throw new Error('Erro ao inscrever');
   return res.json();
@@ -90,7 +90,7 @@ export function Newsletter() {
 
     setLoading(true);
     try {
-      await postSubscribe(email);
+      await postSubscribe(email, 'website');
       setIsSubscribed(true);
       toast.success('🎁 Cupom BEMVINDO10 enviado para seu e-mail!');
       setEmail('');
@@ -111,7 +111,7 @@ export function Newsletter() {
 
     setLoading(true);
     try {
-      await postSubscribe(email);
+      await postSubscribe(email, 'popup');
       setExitCouponRevealed(true);
       toast.success('🎁 Cupom BEMVINDO10 enviado para seu e-mail!');
       setEmail('');

@@ -311,3 +311,12 @@ model CouponUsage {
   @@index([userId])
   @@map("coupon_usages")
 }
+
+model NewsletterSubscriber {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  createdAt DateTime @default(now()) @map("created_at")
+  source    String   @default("website") // 'website' | 'popup'
+
+  @@map("newsletter_subscribers")
+}
