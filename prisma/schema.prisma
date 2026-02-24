@@ -256,6 +256,7 @@ enum CreditReason {
   PURCHASE // Compra aprovada (+5)
   ADMIN_GRANT // Admin liberou manualmente
   ADMIN_REVOKE // Admin removeu
+  ADMIN_ADJUST // Admin ajustou saldo (diferença)
 }
 
 model PromptTemplate {

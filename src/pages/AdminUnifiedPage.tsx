@@ -1,5 +1,6 @@
 import { useState, useMemo, lazy, Suspense } from 'react';
 import { useSearchParams, useLocation, useNavigate } from 'react-router-dom';
+import { Users } from 'lucide-react';
 import { useAdminAuth } from '@/hooks/useAdminAuth';
 import { AdminLogin } from './AdminLogin';
 import { useSEO } from '@/hooks/useSEO';
@@ -18,12 +19,16 @@ const AdminCouponsPage = lazy(() =>
   import('./AdminCouponsPage').then((m) => ({ default: m.AdminCouponsPage }))
 );
 const ProductAdmin = lazy(() => import('@/components/admin/ProductAdmin'));
+const AdminUsersPage = lazy(() =>
+  import('@/components/admin/AdminUsersPage').then((m) => ({ default: m.AdminUsersPage }))
+);
 
-type TabId = 'orders' | 'dashboard' | 'generations' | 'prompts' | 'coupons' | 'products';
+type TabId = 'orders' | 'dashboard' | 'users' | 'generations' | 'prompts' | 'coupons' | 'products';
 
 const TABS: { id: TabId; label: string; icon: string }[] = [
   { id: 'orders', label: 'Pedidos', icon: '📦' },
   { id: 'dashboard', label: 'Dashboard', icon: '📊' },
+  { id: 'users', label: 'Usuários', icon: 'users' },
   { id: 'generations', label: 'Estampas', icon: '🎨' },
   { id: 'prompts', label: 'Prompts', icon: '🤖' },
   { id: 'coupons', label: 'Cupons', icon: '🎟️' },
@@ -32,6 +37,7 @@ const TABS: { id: TabId; label: string; icon: string }[] = [
 
 const PATH_TO_TAB: Record<string, TabId> = {
   dashboard: 'dashboard',
+  users: 'users',
   generations: 'generations',
   prompts: 'prompts',
   coupons: 'coupons',
@@ -170,7 +176,11 @@ export function AdminUnifiedPage() {
               }}
               title={!sidebarOpen ? tab.label : undefined}
             >
-              <span style={{ fontSize: 16, flexShrink: 0 }}>{tab.icon}</span>
+              {tab.id === 'users' ? (
+                <Users size={16} style={{ flexShrink: 0 }} />
+              ) : (
+                <span style={{ fontSize: 16, flexShrink: 0 }}>{tab.icon}</span>
+              )}
               {sidebarOpen && (
                 <span style={{ whiteSpace: 'nowrap', overflow: 'hidden' }}>
                   {tab.label}
@@ -207,6 +217,7 @@ export function AdminUnifiedPage() {
         >
           {activeTab === 'orders' && <AdminDashboard />}
           {activeTab === 'dashboard' && <AdminDashboardPage />}
+          {activeTab === 'users' && <AdminUsersPage />}
           {activeTab === 'generations' && <AdminGenerationsPage />}
           {activeTab === 'prompts' && <AdminPromptsPage />}
           {activeTab === 'coupons' && <AdminCouponsPage />}
