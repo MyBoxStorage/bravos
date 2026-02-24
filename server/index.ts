@@ -320,7 +320,7 @@ app.post('/api/newsletter/subscribe', subscribeNewsletter);
 
 // Auth routes
 app.post('/api/auth/signup', authLimiter, signup);
-app.post('/api/auth/login', login);
+app.post('/api/auth/login', authLimiter, login);
 app.post('/api/auth/verify-email', authLimiter, verifyEmail);
 app.post('/api/auth/resend-verification', authLimiter, resendVerification);
 app.get('/api/auth/me', requireAuth, me);
