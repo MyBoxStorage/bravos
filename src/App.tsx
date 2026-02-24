@@ -1,6 +1,7 @@
 import { useEffect, lazy, Suspense } from "react";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { AuthProvider } from "@/contexts/AuthContext";
+import { CookieBanner } from "@/components/CookieBanner";
 
 // Pages — lazy loaded for route-based code splitting
 const HomePage = lazy(() => import("@/pages/HomePage"));
@@ -61,6 +62,7 @@ function App() {
             <Route path="/minhas-estampas" element={<MinhasEstampasPage />} />
           </Routes>
         </Suspense>
+        <CookieBanner />
       </BrowserRouter>
     </AuthProvider>
   );
